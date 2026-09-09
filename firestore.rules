@@ -16,19 +16,29 @@ service cloud.firestore {
 
     match /teachers/{uid} {
       allow read: if request.auth != null;
-      allow write: if false; // console / admin API only
+      // A teacher may appoint or remove a co-teacher, but never remove herself
+      // — that would let the last teacher lock everyone out of the class screen.
+      allow create: if isTeacher();
+      allow update: if isTeacher();
+      allow delete: if isTeacher() && request.auth.uid != uid;
     }
 
     match /students/{uid} {
       allow read: if request.auth != null;
 
+      // Shape check applies to whoever writes: the student herself, or a
+      // teacher resetting or renaming her.
+      function validStudent() {
+        return request.resource.data.id == uid
+          && request.resource.data.name is string
+          && request.resource.data.name.size() <= 100
+          && request.resource.data.xp is number
+          && request.resource.data.xp >= 0;
+      }
+
       allow create, update: if request.auth != null
-        && request.auth.uid == uid
-        && request.resource.data.id == uid
-        && request.resource.data.name is string
-        && request.resource.data.name.size() <= 100
-        && request.resource.data.xp is number
-        && request.resource.data.xp >= 0;
+        && (request.auth.uid == uid || isTeacher())
+        && validStudent();
 
       // Only a teacher can clear a student's record.
       allow delete: if isTeacher();

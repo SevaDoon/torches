@@ -21,12 +21,20 @@ export interface TorchesDriver {
   loadRoster(): Promise<RosterEntry[]>;
 }
 
-/** XP earned in the last 7 days, used for the "most improved" ranking. */
-export function weeklyXpOf(student: Student): number {
+/**
+ * XP earned in the last 7 days, used for the "most improved" ranking.
+ *
+ * Tolerates a record with no history at all: a partially written document must
+ * never be able to take down the leaderboard or the class screen for everyone.
+ */
+export function weeklyXpOf(student: Pick<Student, 'history'>): number {
+  const history = student?.history;
+  if (!history || typeof history !== 'object') return 0;
   const now = Date.now();
-  return Object.entries(student.history).reduce((sum, [day, xp]) => {
+  return Object.entries(history).reduce((sum, [day, xp]) => {
     const t = Date.parse(day);
-    return Number.isNaN(t) || now - t > 7 * 864e5 ? sum : sum + xp;
+    if (Number.isNaN(t) || now - t > 7 * 864e5) return sum;
+    return sum + (typeof xp === 'number' ? xp : 0);
   }, 0);
 }
 
