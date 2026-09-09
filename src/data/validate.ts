@@ -5,6 +5,7 @@
  * of surfacing as a broken question in front of a student.
  */
 import { getPassage, units } from './curriculum';
+import { PICTURES } from './pictures';
 import { untranslatedIds } from './i18n';
 import { levelFromXp, scoreAnswer, xpForLevel, nextDifficulty } from '../services/progressService';
 
@@ -52,6 +53,20 @@ export function validateCurriculum(): string[] {
         case 'blank':
           if (!q.prompt.includes('___')) problems.push(`${at}: prompt has no ___ gap`);
           if (!q.accept.length) problems.push(`${at}: no accepted answers`);
+          break;
+        case 'picture':
+          if (!PICTURES[q.pictureId]) problems.push(`${at}: no drawing "${q.pictureId}"`);
+          if (q.answer < 0 || q.answer >= q.options.length) problems.push(`${at}: answer out of range`);
+          if (new Set(q.options).size !== q.options.length) problems.push(`${at}: duplicate options`);
+          break;
+        case 'picmatch':
+          if (q.pairs.length < 3) problems.push(`${at}: too few pairs`);
+          for (const [pic] of q.pairs) {
+            if (!PICTURES[pic]) problems.push(`${at}: no drawing "${pic}"`);
+          }
+          if (new Set(q.pairs.map((p) => p[1])).size !== q.pairs.length) {
+            problems.push(`${at}: two pairs share a word — unmatchable`);
+          }
           break;
         case 'error':
           if (q.answer < 0 || q.answer >= q.tokens.length) problems.push(`${at}: bad token index`);

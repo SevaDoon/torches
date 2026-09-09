@@ -12,6 +12,8 @@ import type {
   MatchQuestion,
   McqQuestion,
   OrderQuestion,
+  PicMatchQuestion,
+  PictureQuestion,
   Question,
   Skill,
 } from '../types';
@@ -27,7 +29,11 @@ interface Common {
   p?: string; // passage id
 }
 
-export function builder(unitId: string) {
+/**
+ * `idPrefix` lets a second file add questions to a unit without colliding with
+ * the ids already generated in that unit's own file.
+ */
+export function builder(unitId: string, idPrefix = unitId) {
   let seq = 0;
   let skill: Skill = 'grammar';
   let lesson = '3 Grammar';
@@ -35,7 +41,7 @@ export function builder(unitId: string) {
   const out: Question[] = [];
 
   const base = (c: Common) => ({
-    id: `${unitId}-q${String(++seq).padStart(3, '0')}`,
+    id: `${idPrefix}-q${String(++seq).padStart(3, '0')}`,
     unitId,
     skill: c.s ?? skill,
     difficulty: (c.d ?? 2) as Difficulty,
@@ -87,6 +93,30 @@ export function builder(unitId: string) {
     /** Memory cards — same data shape as `mat`, different game. */
     mem(q: { q: string; pairs: Array<[string, string]> } & Common) {
       out.push({ ...base(q), type: 'memory', prompt: q.q, pairs: q.pairs } as MatchQuestion);
+      return api;
+    },
+
+    /** Name the drawing. `pic` is a key from data/pictures.tsx. */
+    pic(q: { pic: string; o: string[]; a: number } & Common) {
+      out.push({
+        ...base(q),
+        type: 'picture',
+        prompt: 'What is this?',
+        pictureId: q.pic,
+        options: q.o,
+        answer: q.a,
+      } as PictureQuestion);
+      return api;
+    },
+
+    /** Match drawings to words. Each pair is [pictureId, word]. */
+    picmat(q: { pairs: Array<[string, string]> } & Common) {
+      out.push({
+        ...base(q),
+        type: 'picmatch',
+        prompt: 'Match each picture with its word.',
+        pairs: q.pairs,
+      } as PicMatchQuestion);
       return api;
     },
 

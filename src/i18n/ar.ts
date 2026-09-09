@@ -61,6 +61,8 @@ export const ar = {
     memory: 'اقلبي وتذكّري',
     blank: 'اكتبي الكلمة',
     error: 'اصطادي الخطأ',
+    picture: 'سمّي الصورة',
+    picmatch: 'وصّلي الصور',
   } as Record<string, string>,
 
   missions: {
@@ -138,6 +140,8 @@ export const ar = {
       memory: 'اقلبي البطاقات وابحثي عن الأزواج',
       error: 'في الجملة كلمة واحدة خاطئة — اضغطي عليها',
       blank: 'أكملي الفراغ بالكلمة المناسبة',
+      picture: 'ما اسم هذا بالإنجليزي؟',
+      picmatch: 'اضغطي الصورة ثم الكلمة التي تناسبها',
     } as Record<string, string | undefined>,
     correct: ['أحسنتِ!', 'ممتاز!', 'بالضبط!', 'إجابة صحيحة!'],
     tryAgain: 'ليست صحيحة — حاولي مرة أخرى',

@@ -20,6 +20,7 @@ import { unit09ar } from './unit09.ar';
 import { unit10ar } from './unit10.ar';
 import { unit11ar } from './unit11.ar';
 import { unit12ar } from './unit12.ar';
+import { picturesAr } from './pictures.ar';
 
 export interface QuestionAr {
   /** Arabic explanation, shown after a wrong answer and as the last hint. */
@@ -49,7 +50,8 @@ const UNITS_AR: Record<string, UnitAr> = {
   'unit-12': unit12ar,
 };
 
-const entryFor = (q: Question): QuestionAr | undefined => UNITS_AR[q.unitId]?.q[q.id];
+const entryFor = (q: Question): QuestionAr | undefined =>
+  UNITS_AR[q.unitId]?.q[q.id] ?? picturesAr[q.id];
 
 /** Arabic hints when they exist, English as the safety net. */
 export function hintsOf(q: Question): [string, string, string] {
@@ -75,7 +77,7 @@ export function untranslatedIds(): string[] {
     const unit = getUnit(unitId);
     if (!unit) continue;
     for (const q of unit.questions) {
-      const e = tr.q[q.id];
+      const e = entryFor(q);
       if (!e || !e.ex?.trim() || e.h.length !== 3 || e.h.some((h) => !h?.trim())) {
         missing.push(q.id);
       }

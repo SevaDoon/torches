@@ -543,6 +543,38 @@ input { font: inherit; }
   direction: ltr;
 }
 
+/* picture games */
+.picture-stage {
+  display: grid;
+  place-items: center;
+  padding: 14px;
+  margin-bottom: 4px;
+  border-radius: var(--r);
+  background: var(--paper-3);
+  border: 2px solid var(--ink);
+  box-shadow: var(--shadow-sm);
+}
+
+.picmatch-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 8px;
+}
+.pic-cell {
+  display: grid;
+  place-items: center;
+  aspect-ratio: 1 / 1;
+  padding: 4px;
+  border-radius: 10px;
+  background: var(--paper-2);
+  border: var(--border);
+  box-shadow: var(--shadow-sm);
+  transition: transform 0.1s, box-shadow 0.1s, background 0.16s, opacity 0.24s;
+}
+.pic-cell.sel { background: var(--amber); }
+.pic-cell.done { opacity: 0.34; box-shadow: none; background: var(--green); pointer-events: none; }
+.pic-cell:active { transform: translate(2px, 2px); box-shadow: none; }
+
 /* match & memory */
 .match-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
 .match-cell {

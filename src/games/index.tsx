@@ -8,6 +8,8 @@ import type {
   MatchQuestion,
   McqQuestion,
   OrderQuestion,
+  PicMatchQuestion,
+  PictureQuestion,
   Question,
 } from '../types';
 import type { GameProps } from './types';
@@ -17,6 +19,8 @@ import { MatchPairs } from './MatchPairs';
 import { MemoryCards } from './MemoryCards';
 import { WordType } from './WordType';
 import { ErrorHunt } from './ErrorHunt';
+import { PicturePick } from './PicturePick';
+import { PictureMatch } from './PictureMatch';
 import { ar } from '../i18n/ar';
 
 export const GAME_NAMES: Record<Question['type'], string> = ar.games as Record<
@@ -40,5 +44,9 @@ export function GameSurface(props: GameProps) {
       return <WordType {...props} question={question as BlankQuestion} />;
     case 'error':
       return <ErrorHunt {...props} question={question as ErrorQuestion} />;
+    case 'picture':
+      return <PicturePick {...props} question={question as PictureQuestion} />;
+    case 'picmatch':
+      return <PictureMatch {...props} question={question as PicMatchQuestion} />;
   }
 }

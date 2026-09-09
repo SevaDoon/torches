@@ -11,16 +11,24 @@ import { unit09 } from './unit09';
 import { unit10 } from './unit10';
 import { unit11 } from './unit11';
 import { unit12 } from './unit12';
+import { PICTURE_QUESTIONS } from './pictureQuestions';
 
 export const COURSE = {
   title: 'MegaGoal 1',
   subtitle: 'Student Book — Saudi edition',
 };
 
-export const units: Unit[] = [
+const bookUnits: Unit[] = [
   unit01, unit02, unit03, unit04, unit05, unit06,
   unit07, unit08, unit09, unit10, unit11, unit12,
 ];
+
+/** The picture games live in their own file; fold them into their units here. */
+export const units: Unit[] = bookUnits.map((u) =>
+  PICTURE_QUESTIONS[u.id]
+    ? { ...u, questions: [...u.questions, ...PICTURE_QUESTIONS[u.id]] }
+    : u,
+);
 
 /** English name (the book's own term) and the ink each skill is printed in. */
 export const SKILLS: Record<Skill, { label: string; color: string }> = {

@@ -278,9 +278,10 @@ export function Play() {
           <span className="chip chip-quiet">{ar.play.difficulty[q.difficulty - 1]}</span>
         </div>
 
-        {/* Word Hunt draws the sentence itself, with a live gap — so here it
-            only gets the Arabic instruction, never the sentence twice. */}
-        {q.type === 'blank' ? (
+        {/* Word Hunt draws the sentence itself, and the picture games say
+            everything in the drawing — so these only get the Arabic
+            instruction, with no redundant English line under it. */}
+        {q.type === 'blank' || q.type === 'picture' || q.type === 'picmatch' ? (
           <p className="small muted" style={{ marginBottom: 12 }}>{instruction}</p>
         ) : instruction ? (
           <>

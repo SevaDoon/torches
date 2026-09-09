@@ -12,7 +12,9 @@ export type QuestionType =
   | 'match' // pair items from two columns
   | 'memory' // memory cards, built from the same pairs as `match`
   | 'blank' // type the missing word
-  | 'error'; // tap the wrong word in the sentence
+  | 'error' // tap the wrong word in the sentence
+  | 'picture' // see a drawing, choose the English word
+  | 'picmatch'; // match drawings to their words
 
 export interface BaseQuestion {
   id: string;
@@ -68,12 +70,30 @@ export interface ErrorQuestion extends BaseQuestion {
   correction: string;
 }
 
+export interface PictureQuestion extends BaseQuestion {
+  type: 'picture';
+  prompt: string;
+  /** Key into PICTURES in data/pictures.tsx. */
+  pictureId: string;
+  options: string[];
+  answer: number;
+}
+
+export interface PicMatchQuestion extends BaseQuestion {
+  type: 'picmatch';
+  prompt: string;
+  /** [pictureId, English word] — the game shuffles both sides. */
+  pairs: Array<[string, string]>;
+}
+
 export type Question =
   | McqQuestion
   | OrderQuestion
   | MatchQuestion
   | BlankQuestion
-  | ErrorQuestion;
+  | ErrorQuestion
+  | PictureQuestion
+  | PicMatchQuestion;
 
 export interface Passage {
   id: string;
