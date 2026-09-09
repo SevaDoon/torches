@@ -79,7 +79,6 @@ export function Leaderboard() {
               </span>
               <span className="tiny dim">
                 {ar.levelShort} <span className="num">{r.level}</span>
-                {r.demo && ` ${ar.leaderboard.demo}`}
               </span>
             </span>
             <span className="num" style={{ fontWeight: 700, whiteSpace: 'nowrap' }}>

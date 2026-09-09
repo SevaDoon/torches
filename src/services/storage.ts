@@ -4,6 +4,7 @@
  * new object with the same four methods — no component changes.
  */
 import type { Student } from '../types';
+import { getDocument, queryTop, setDocument } from './firestoreRest';
 
 export interface RosterEntry {
   id: string;
@@ -93,5 +94,46 @@ export function weeklyXpOf(student: Student): number {
   }, 0);
 }
 
-/** The single swap point. Replace with a remote driver when a backend exists. */
-export const driver: TorchesDriver = localDriver;
+/**
+ * Real, shared leaderboard: students and progress live in Firestore so every
+ * device sees the same class. Which device is "signed in" stays local (no
+ * login in this app), so that half reuses localDriver.
+ */
+export const firestoreDriver: TorchesDriver = {
+  currentStudentId: localDriver.currentStudentId,
+  setCurrentStudentId: localDriver.setCurrentStudentId,
+  async loadStudent(id) {
+    try {
+      return await getDocument<Student>('students', id);
+    } catch {
+      return null; // offline or first load — the app treats this as "no save yet"
+    }
+  },
+  async saveStudent(student) {
+    try {
+      await setDocument('students', student.id, {
+        ...student,
+        weeklyXp: weeklyXpOf(student), // denormalized so the leaderboard query needs no extra reads
+      });
+    } catch {
+      /* offline — progress stays in memory for this session and saves next time */
+    }
+  },
+  async loadRoster() {
+    try {
+      const rows = await queryTop<Student & { weeklyXp: number }>('students', 'xp', 50);
+      return rows.map((r) => ({
+        id: r.id,
+        name: r.name,
+        avatar: r.avatar,
+        xp: r.xp,
+        weeklyXp: r.weeklyXp ?? 0,
+      }));
+    } catch {
+      return [];
+    }
+  },
+};
+
+/** The single swap point. */
+export const driver: TorchesDriver = firestoreDriver;

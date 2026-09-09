@@ -151,8 +151,6 @@ export interface LeaderboardRow {
   level: number;
   weeklyXp: number;
   isMe: boolean;
-  /** True for the seeded demo classmates shown until a backend is connected. */
-  demo?: boolean;
 }
 
 /* ---------- play session ---------- */

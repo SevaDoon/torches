@@ -1,0 +1,17 @@
+rules_version = '2';
+
+// No login in this app (students only get a generated id), so there's no
+// auth-based ownership check possible. This just keeps writes shaped like a
+// real student record instead of wide open garbage.
+service cloud.firestore {
+  match /databases/{database}/documents {
+    match /students/{studentId} {
+      allow read: if true;
+      allow write: if request.resource.data.id == studentId
+        && request.resource.data.name is string
+        && request.resource.data.name.size() <= 100
+        && request.resource.data.xp is number
+        && request.resource.data.xp >= 0;
+    }
+  }
+}
