@@ -1,29 +1,44 @@
-﻿import { useEffect, useState } from 'react';
+import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useStudent } from '../state/StudentContext';
 import { COURSE, units } from '../data/curriculum';
 import { totalQuestionCount } from '../services/progressService';
-import { listPlayers } from '../services/studentService';
-import type { RosterEntry } from '../services/storage';
 import { ar } from '../i18n/ar';
 import { Icon } from '../components/Icon';
 
+/** Firebase's error codes, said in a way a student can act on. */
+function messageFor(code: string, mode: 'login' | 'register'): string {
+  if (code === 'EMAIL_EXISTS') return ar.auth.nameTaken;
+  if (code === 'INVALID_LOGIN_CREDENTIALS' || code === 'INVALID_PASSWORD') return ar.auth.wrongPin;
+  if (code === 'EMAIL_NOT_FOUND') return ar.auth.noAccount;
+  if (code === 'WEAK_PASSWORD') return ar.auth.pinTooShort;
+  if (code.startsWith('TOO_MANY_ATTEMPTS')) return ar.auth.tooMany;
+  return mode === 'login' ? ar.auth.loginFailed : ar.auth.registerFailed;
+}
+
 export function Welcome() {
-  const { begin, resume } = useStudent();
+  const { register, login } = useStudent();
+  const [mode, setMode] = useState<'login' | 'register'>('login');
   const [name, setName] = useState('');
+  const [pin, setPin] = useState('');
   const [busy, setBusy] = useState(false);
-  const [players, setPlayers] = useState<RosterEntry[]>([]);
+  const [error, setError] = useState('');
   const navigate = useNavigate();
 
-  useEffect(() => {
-    void listPlayers().then(setPlayers);
-  }, []);
+  const ready = name.trim().length > 0 && /^\d{4,8}$/.test(pin) && !busy;
 
-  const start = async () => {
-    if (!name.trim() || busy) return;
+  const submit = async () => {
+    if (!ready) return;
     setBusy(true);
-    await begin(name);
-    navigate('/home', { replace: true });
+    setError('');
+    try {
+      if (mode === 'register') await register(name, pin);
+      else await login(name, pin);
+      navigate('/home', { replace: true });
+    } catch (e) {
+      setError(messageFor((e as Error).message, mode));
+      setBusy(false);
+    }
   };
 
   return (
@@ -38,48 +53,70 @@ export function Welcome() {
           {ar.welcome.intro}
         </p>
 
-        <div className="stack">
-          <input
-            className="field"
-            value={name}
-            maxLength={24}
-            placeholder={ar.welcome.placeholder}
-            onChange={(e) => setName(e.target.value)}
-            onKeyDown={(e) => e.key === 'Enter' && void start()}
-            autoFocus
-          />
+        <div className="row" style={{ gap: 8 }}>
           <button
-            className="btn btn-primary btn-block"
-            disabled={!name.trim() || busy}
-            onClick={() => void start()}
+            className={`btn btn-sm grow${mode === 'login' ? ' btn-ink' : ''}`}
+            onClick={() => {
+              setMode('login');
+              setError('');
+            }}
           >
-            <Icon name="flame" size={18} filled />
-            {ar.welcome.start}
+            {ar.auth.loginTab}
+          </button>
+          <button
+            className={`btn btn-sm grow${mode === 'register' ? ' btn-ink' : ''}`}
+            onClick={() => {
+              setMode('register');
+              setError('');
+            }}
+          >
+            {ar.auth.registerTab}
           </button>
         </div>
 
-        {players.length > 0 && (
-          <div className="stack" style={{ gap: 8 }}>
-            <div className="eyebrow">{ar.welcome.continueAs}</div>
-            {players.map((p) => (
-              <button
-                key={p.id}
-                className="lb-row tappable"
-                style={{ gridTemplateColumns: '38px 1fr auto' }}
-                onClick={() => {
-                  void resume(p.id).then((ok) => ok && navigate('/home', { replace: true }));
-                }}
-              >
-                <span className="lb-av">{p.avatar}</span>
-                <span style={{ minWidth: 0 }}>
-                  <span style={{ fontWeight: 600, display: 'block' }}>{p.name}</span>
-                  <span className="tiny dim en-ui">{p.id}</span>
-                </span>
-                <span className="tiny muted num">{p.xp.toLocaleString('en-US')}</span>
-              </button>
-            ))}
-          </div>
-        )}
+        <div className="stack">
+          <label className="stack" style={{ gap: 6 }}>
+            <span className="tiny muted">{ar.auth.nameLabel}</span>
+            <input
+              className="field"
+              value={name}
+              maxLength={24}
+              placeholder={ar.auth.namePlaceholder}
+              onChange={(e) => setName(e.target.value)}
+              onKeyDown={(e) => e.key === 'Enter' && void submit()}
+              autoFocus
+            />
+          </label>
+
+          <label className="stack" style={{ gap: 6 }}>
+            <span className="tiny muted">{ar.auth.pinLabel}</span>
+            <input
+              className="field num"
+              value={pin}
+              inputMode="numeric"
+              type="password"
+              maxLength={8}
+              placeholder="••••"
+              onChange={(e) => setPin(e.target.value.replace(/\D/g, ''))}
+              onKeyDown={(e) => e.key === 'Enter' && void submit()}
+            />
+          </label>
+
+          {error && (
+            <p className="small" style={{ margin: 0, color: 'var(--red)', fontWeight: 600 }}>
+              {error}
+            </p>
+          )}
+
+          <button className="btn btn-primary btn-block" disabled={!ready} onClick={() => void submit()}>
+            <Icon name="flame" size={18} filled />
+            {busy ? ar.auth.working : mode === 'register' ? ar.auth.registerAction : ar.auth.loginAction}
+          </button>
+
+          <p className="tiny dim center" style={{ margin: 0 }}>
+            {mode === 'register' ? ar.auth.registerHint : ar.auth.loginHint}
+          </p>
+        </div>
 
         <div className="row wrap center" style={{ justifyContent: 'center', gap: 8 }}>
           <span className="chip">{ar.welcome.unitsChip(units.length)}</span>

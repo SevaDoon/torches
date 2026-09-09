@@ -1,14 +1,14 @@
 ﻿import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useStudentRequired } from '../state/StudentContext';
-import { AVATARS, rename, signOut } from '../services/studentService';
+import { AVATARS, rename } from '../services/studentService';
 import { levelProgress } from '../services/progressService';
 import { Torch, TorchTierName } from '../components/Torch';
 import { Icon } from '../components/Icon';
 import { ar } from '../i18n/ar';
 
 export function Profile() {
-  const { student, update, toast } = useStudentRequired();
+  const { student, update, toast, leave } = useStudentRequired();
   const navigate = useNavigate();
   const [editing, setEditing] = useState(false);
   const [draft, setDraft] = useState(student.name);
@@ -77,12 +77,12 @@ export function Profile() {
         <div className="eyebrow">{ar.profile.playerId}</div>
         <div className="row-between" style={{ marginTop: 8 }}>
           <code className="en-ui" style={{ fontSize: '1.15rem', fontWeight: 700, letterSpacing: '0.05em' }}>
-            {student.id}
+            {student.code}
           </code>
           <button
             className="btn btn-sm"
             onClick={() => {
-              void navigator.clipboard?.writeText(student.id);
+              void navigator.clipboard?.writeText(student.code);
               toast('📋', ar.profile.copied);
             }}
           >
@@ -129,7 +129,7 @@ export function Profile() {
       <button
         className="btn btn-block"
         onClick={() => {
-          void signOut().then(() => navigate('/welcome', { replace: true }));
+          void leave().then(() => navigate('/welcome', { replace: true }));
         }}
       >
         {ar.profile.switch}

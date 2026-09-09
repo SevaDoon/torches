@@ -2,13 +2,15 @@
 import type { Skill, Student } from '../types';
 import { driver } from './storage';
 import { nextStreak, todayKey } from './progressService';
+import * as auth from './authRest';
+import { setAuthToken } from './firestoreRest';
 
 const ID_ALPHABET = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789'; // no I, O, 0, 1 — easier to read aloud
 
 export const AVATARS = ['🔥', '⭐', '🌙', '🚀', '🦋', '🌸', '🐬', '🍀', '💎', '🎨', '📚', '⚡'];
 
-/** TOR-A82F91 — the permanent identity. The display name is never the key. */
-export function generateId(): string {
+/** TOR-A82F91 — the friendly code shown in the profile. Not the storage key. */
+export function generateCode(): string {
   let body = '';
   const bytes = new Uint8Array(6);
   crypto.getRandomValues(bytes);
@@ -16,9 +18,10 @@ export function generateId(): string {
   return `TOR-${body}`;
 }
 
-export function blankStudent(name: string): Student {
+export function blankStudent(name: string, id: string): Student {
   return {
-    id: generateId(),
+    id,
+    code: generateCode(),
     name: name.trim() || 'Student',
     createdAt: Date.now(),
     avatar: AVATARS[Math.floor(Math.random() * AVATARS.length)],
@@ -46,10 +49,11 @@ export function blankStudent(name: string): Student {
 
 /** Fills in anything missing after an app update, so old saves keep working. */
 function migrate(s: Student): Student {
-  const blank = blankStudent(s.name);
+  const blank = blankStudent(s.name, s.id);
   return {
     ...blank,
     ...s,
+    code: s.code ?? blank.code,
     skills: { ...blank.skills, ...s.skills },
     units: s.units ?? {},
     achievements: s.achievements ?? [],
@@ -59,30 +63,38 @@ function migrate(s: Student): Student {
   };
 }
 
+/**
+ * Called once on boot. Turns a saved refresh token back into a live session, so
+ * a student who played yesterday lands straight on her own dashboard.
+ */
 export async function loadCurrentStudent(): Promise<Student | null> {
-  const id = await driver.currentStudentId();
-  if (!id) return null;
-  const student = await driver.loadStudent(id);
+  const session = await auth.restoreSession();
+  if (!session) return null;
+  setAuthToken(session.idToken);
+  const student = await driver.loadStudent(session.uid);
   return student ? migrate(student) : null;
 }
 
-export async function startStudent(name: string): Promise<Student> {
-  const student = blankStudent(name);
+/** First time: creates the account. Throws AuthError('EMAIL_EXISTS') if taken. */
+export async function registerStudent(name: string, pin: string): Promise<Student> {
+  const session = await auth.signUp(name, pin);
+  setAuthToken(session.idToken);
+  const student = blankStudent(name, session.uid);
   await driver.saveStudent(student);
-  await driver.setCurrentStudentId(student.id);
   return student;
 }
 
-/** Everyone who has ever played on this device — used by the "continue as" list. */
-export async function listPlayers() {
-  return driver.loadRoster();
-}
+/** Returning: name + PIN on any device gets the same progress back. */
+export async function loginStudent(name: string, pin: string): Promise<Student> {
+  const session = await auth.signIn(name, pin);
+  setAuthToken(session.idToken);
+  const existing = await driver.loadStudent(session.uid);
+  if (existing) return migrate(existing);
 
-export async function resumeStudent(id: string): Promise<Student | null> {
-  const student = await driver.loadStudent(id);
-  if (!student) return null;
-  await driver.setCurrentStudentId(id);
-  return migrate(student);
+  // Account exists but the record was never written (interrupted first signup).
+  const student = blankStudent(name, session.uid);
+  await driver.saveStudent(student);
+  return student;
 }
 
 export async function persist(student: Student): Promise<void> {
@@ -90,7 +102,8 @@ export async function persist(student: Student): Promise<void> {
 }
 
 export async function signOut(): Promise<void> {
-  await driver.setCurrentStudentId(null);
+  auth.forgetSession();
+  setAuthToken(null);
 }
 
 /* ---------- record an answer ---------- */

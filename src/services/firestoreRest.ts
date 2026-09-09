@@ -9,6 +9,19 @@
 const PROJECT_ID = 'torches-megagoal-687ee';
 const BASE = `https://firestore.googleapis.com/v1/projects/${PROJECT_ID}/databases/(default)/documents`;
 
+/*
+ * The signed-in student's token. Firestore rules only let her write her own row,
+ * so every request carries it. Set at sign-in and on each page load.
+ */
+let idToken: string | null = null;
+export function setAuthToken(token: string | null) {
+  idToken = token;
+}
+
+function headers(extra: Record<string, string> = {}): Record<string, string> {
+  return idToken ? { ...extra, Authorization: `Bearer ${idToken}` } : extra;
+}
+
 type FsValue =
   | { stringValue: string }
   | { integerValue: string }
@@ -53,7 +66,9 @@ function decodeFields(fields: Record<string, FsValue>): Record<string, unknown> 
 }
 
 export async function getDocument<T>(collection: string, id: string): Promise<T | null> {
-  const res = await fetch(`${BASE}/${collection}/${encodeURIComponent(id)}`);
+  const res = await fetch(`${BASE}/${collection}/${encodeURIComponent(id)}`, {
+    headers: headers(),
+  });
   if (res.status === 404) return null;
   if (!res.ok) throw new Error(`Firestore get failed: ${res.status}`);
   const body = await res.json();
@@ -63,7 +78,7 @@ export async function getDocument<T>(collection: string, id: string): Promise<T 
 export async function setDocument(collection: string, id: string, data: Record<string, unknown>) {
   const res = await fetch(`${BASE}/${collection}/${encodeURIComponent(id)}`, {
     method: 'PATCH',
-    headers: { 'Content-Type': 'application/json' },
+    headers: headers({ 'Content-Type': 'application/json' }),
     body: JSON.stringify({ fields: encodeFields(data) }),
   });
   if (!res.ok) throw new Error(`Firestore set failed: ${res.status} ${await res.text()}`);
@@ -77,7 +92,7 @@ export async function queryTop<T>(
 ): Promise<T[]> {
   const res = await fetch(`${BASE}:runQuery`, {
     method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
+    headers: headers({ 'Content-Type': 'application/json' }),
     body: JSON.stringify({
       structuredQuery: {
         from: [{ collectionId: collection }],

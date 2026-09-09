@@ -118,8 +118,10 @@ export interface UnitProgress {
 }
 
 export interface Student {
-  /** Immutable identity. Never derived from the display name. */
+  /** Firebase Auth uid — the storage key and what the rules check. */
   id: string;
+  /** TOR-A82F91, shown in the profile. Friendly, but never the key. */
+  code: string;
   name: string;
   createdAt: number;
   avatar: string;

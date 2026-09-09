@@ -9,7 +9,13 @@ import {
   type ReactNode,
 } from 'react';
 import type { Student } from '../types';
-import { loadCurrentStudent, persist, resumeStudent, startStudent } from '../services/studentService';
+import {
+  loadCurrentStudent,
+  loginStudent,
+  persist,
+  registerStudent,
+  signOut as signOutStudent,
+} from '../services/studentService';
 import { levelFromXp } from '../services/progressService';
 import { ACHIEVEMENTS, newlyEarned } from '../services/achievements';
 import { achievementsAr, ar } from '../i18n/ar';
@@ -24,9 +30,12 @@ export interface Toast {
 interface Ctx {
   student: Student | null;
   loading: boolean;
-  begin: (name: string) => Promise<void>;
-  /** Continue as a player who already exists on this device. */
-  resume: (id: string) => Promise<boolean>;
+  /** Create a new account with a name and a PIN. */
+  register: (name: string, pin: string) => Promise<void>;
+  /** Sign back in on any device with the same name and PIN. */
+  login: (name: string, pin: string) => Promise<void>;
+  /** Sign out and return to the welcome screen. */
+  leave: () => Promise<void>;
   /** Every change to the student goes through here: it saves, and it celebrates. */
   update: (fn: (s: Student) => Student) => void;
   toast: (icon: string, text: string) => void;
@@ -63,9 +72,9 @@ export function StudentProvider({ children }: { children: ReactNode }) {
     setTimeout(() => setCelebrating(false), 2600);
   }, []);
 
-  const begin = useCallback(
-    async (name: string) => {
-      const s = await startStudent(name);
+  const register = useCallback(
+    async (name: string, pin: string) => {
+      const s = await registerStudent(name, pin);
       setStudent(s);
       setSoundEnabled(s.soundOn);
       toast('🔥', ar.toasts.welcome(s.name));
@@ -73,17 +82,20 @@ export function StudentProvider({ children }: { children: ReactNode }) {
     [toast],
   );
 
-  const resume = useCallback(
-    async (id: string) => {
-      const s = await resumeStudent(id);
-      if (!s) return false;
+  const login = useCallback(
+    async (name: string, pin: string) => {
+      const s = await loginStudent(name, pin);
       setStudent(s);
       setSoundEnabled(s.soundOn);
       toast('👋', ar.toasts.welcomeBack(s.name));
-      return true;
     },
     [toast],
   );
+
+  const leave = useCallback(async () => {
+    await signOutStudent();
+    setStudent(null);
+  }, []);
 
   const update = useCallback(
     (fn: (s: Student) => Student) => {
@@ -115,8 +127,8 @@ export function StudentProvider({ children }: { children: ReactNode }) {
   );
 
   const value = useMemo(
-    () => ({ student, loading, begin, resume, update, toast, toasts, celebrate, celebrating }),
-    [student, loading, begin, resume, update, toast, toasts, celebrate, celebrating],
+    () => ({ student, loading, register, login, leave, update, toast, toasts, celebrate, celebrating }),
+    [student, loading, register, login, leave, update, toast, toasts, celebrate, celebrating],
   );
 
   return <StudentCtx.Provider value={value}>{children}</StudentCtx.Provider>;
