@@ -16,6 +16,7 @@ import {
   registerStudent,
   signOut as signOutStudent,
 } from '../services/studentService';
+import { isTeacher as checkTeacher } from '../services/teacherService';
 import { levelFromXp } from '../services/progressService';
 import { ACHIEVEMENTS, newlyEarned } from '../services/achievements';
 import { achievementsAr, ar } from '../i18n/ar';
@@ -30,6 +31,8 @@ export interface Toast {
 interface Ctx {
   student: Student | null;
   loading: boolean;
+  /** True when this account also has a /teachers document. */
+  isTeacher: boolean;
   /** Create a new account with a name and a PIN. */
   register: (name: string, pin: string) => Promise<void>;
   /** Sign back in on any device with the same name and PIN. */
@@ -49,6 +52,7 @@ const StudentCtx = createContext<Ctx | null>(null);
 export function StudentProvider({ children }: { children: ReactNode }) {
   const [student, setStudent] = useState<Student | null>(null);
   const [loading, setLoading] = useState(true);
+  const [isTeacher, setIsTeacher] = useState(false);
   const [toasts, setToasts] = useState<Toast[]>([]);
   const [celebrating, setCelebrating] = useState(false);
   const nextId = useRef(1);
@@ -60,6 +64,15 @@ export function StudentProvider({ children }: { children: ReactNode }) {
       setLoading(false);
     });
   }, []);
+
+  // Teacher status is a property of the account, so re-check whenever it changes.
+  useEffect(() => {
+    if (!student) {
+      setIsTeacher(false);
+      return;
+    }
+    void checkTeacher(student.id).then(setIsTeacher);
+  }, [student?.id]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const toast = useCallback((icon: string, text: string) => {
     const id = nextId.current++;
@@ -127,8 +140,8 @@ export function StudentProvider({ children }: { children: ReactNode }) {
   );
 
   const value = useMemo(
-    () => ({ student, loading, register, login, leave, update, toast, toasts, celebrate, celebrating }),
-    [student, loading, register, login, leave, update, toast, toasts, celebrate, celebrating],
+    () => ({ student, loading, isTeacher, register, login, leave, update, toast, toasts, celebrate, celebrating }),
+    [student, loading, isTeacher, register, login, leave, update, toast, toasts, celebrate, celebrating],
   );
 
   return <StudentCtx.Provider value={value}>{children}</StudentCtx.Provider>;

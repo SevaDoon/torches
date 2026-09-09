@@ -13,6 +13,7 @@ import { Profile } from './pages/Profile';
 import { Achievements } from './pages/Achievements';
 import { Review } from './pages/Review';
 import { Skills } from './pages/Skills';
+import { Teacher } from './pages/Teacher';
 import { ar } from './i18n/ar';
 
 function Splash() {
@@ -69,6 +70,7 @@ function Routed() {
         <Route path="/achievements" element={<Achievements />} />
         <Route path="/review" element={<Review />} />
         <Route path="/skills" element={<Skills />} />
+        <Route path="/teacher" element={<Teacher />} />
         <Route path="*" element={<Navigate to="/home" replace />} />
       </Routes>
       {!playing && <Nav />}

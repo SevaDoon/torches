@@ -84,6 +84,14 @@ export async function setDocument(collection: string, id: string, data: Record<s
   if (!res.ok) throw new Error(`Firestore set failed: ${res.status} ${await res.text()}`);
 }
 
+export async function deleteDocument(collection: string, id: string) {
+  const res = await fetch(`${BASE}/${collection}/${encodeURIComponent(id)}`, {
+    method: 'DELETE',
+    headers: headers(),
+  });
+  if (!res.ok) throw new Error(`Firestore delete failed: ${res.status}`);
+}
+
 /** Top `limit` documents in `collection`, ordered by `orderByField` descending. */
 export async function queryTop<T>(
   collection: string,

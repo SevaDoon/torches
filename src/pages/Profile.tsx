@@ -8,7 +8,7 @@ import { Icon } from '../components/Icon';
 import { ar } from '../i18n/ar';
 
 export function Profile() {
-  const { student, update, toast, leave } = useStudentRequired();
+  const { student, update, toast, leave, isTeacher } = useStudentRequired();
   const navigate = useNavigate();
   const [editing, setEditing] = useState(false);
   const [draft, setDraft] = useState(student.name);
@@ -111,6 +111,20 @@ export function Profile() {
           ))}
         </div>
       </section>
+
+      {isTeacher && (
+        <button
+          className="card card-hot tappable row-between"
+          style={{ width: '100%', textAlign: 'start' }}
+          onClick={() => navigate('/teacher')}
+        >
+          <div>
+            <div className="eyebrow">{ar.teacher.eyebrow}</div>
+            <h3 style={{ marginTop: 4 }}>{ar.teacher.title}</h3>
+          </div>
+          <Icon name="crown" size={26} />
+        </button>
+      )}
 
       <section className="card row-between">
         <div>

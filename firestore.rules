@@ -5,6 +5,20 @@ rules_version = '2';
 // the whole class, but only a signed-in student can read at all.
 service cloud.firestore {
   match /databases/{database}/documents {
+
+    // A teacher is simply a document in /teachers named after her uid. Only
+    // someone with console access can create one, so a student cannot promote
+    // herself by writing to Firestore.
+    function isTeacher() {
+      return request.auth != null
+        && exists(/databases/$(database)/documents/teachers/$(request.auth.uid));
+    }
+
+    match /teachers/{uid} {
+      allow read: if request.auth != null;
+      allow write: if false; // console / admin API only
+    }
+
     match /students/{uid} {
       allow read: if request.auth != null;
 
@@ -16,7 +30,8 @@ service cloud.firestore {
         && request.resource.data.xp is number
         && request.resource.data.xp >= 0;
 
-      allow delete: if false;
+      // Only a teacher can clear a student's record.
+      allow delete: if isTeacher();
     }
   }
 }
