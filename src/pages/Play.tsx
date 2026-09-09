@@ -10,7 +10,8 @@ import {
   type SessionSummary,
 } from '../engine/useSession';
 import { missionsFor, reviewMission } from '../engine/missions';
-import { getPassage, getUnit } from '../data/curriculum';
+import { getPassage, getUnit, lessonFor } from '../data/curriculum';
+import { localizeLesson } from '../data/i18n';
 import { applyAnswer, applyMissionResult } from '../services/studentService';
 import { Blocks } from '../components/Bar';
 import { Icon, missionIcon } from '../components/Icon';
@@ -32,6 +33,23 @@ export function Play() {
     return missionsFor(unitId).find((m) => m.key === missionKey);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [unitId, missionKey]);
+
+  /*
+   * Teach before testing. A skill mission opens on its rule the first time it
+   * is played; after that she has seen it, so it becomes a button instead of a
+   * gate. Boss and mixed rounds never pre-teach — they are the exam.
+   */
+  const lesson = useMemo(() => {
+    if (!spec || spec.kind !== 'skill') return null;
+    const raw = lessonFor(spec.unitId, spec.skills[0]);
+    return raw ? localizeLesson(spec.unitId, raw) : null;
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [spec]);
+
+  const [showLesson, setShowLesson] = useState(
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    () => !!lesson && !student.units[unitId]?.missions[missionKey],
+  );
 
   const commit = useCallback(
     (record: Parameters<typeof applyAnswer>[1]) => {
@@ -141,6 +159,38 @@ export function Play() {
     );
   }
 
+  /* ---------- teach the rule before the first attempt ---------- */
+  if (showLesson && lesson) {
+    return (
+      <div className="play">
+        <div className="stack-lg" style={{ margin: 'auto 0' }}>
+          <div className="center">
+            <div className="eyebrow" style={{ justifyContent: 'center' }}>{ar.lesson.tag}</div>
+            <h1 style={{ marginTop: 8 }}>{lesson.title}</h1>
+          </div>
+
+          <div className="card card-lg">
+            <p className="small" style={{ margin: 0 }}>{lesson.rule}</p>
+            <div className="divider" />
+            <div className="eyebrow" style={{ marginBottom: 8 }}>{ar.lesson.examples}</div>
+            {lesson.examples.map((e, i) => (
+              <p key={i} className="small en" style={{ margin: '4px 0' }}>
+                {e}
+              </p>
+            ))}
+          </div>
+
+          <p className="tiny dim center" style={{ margin: 0 }}>{ar.lesson.note}</p>
+
+          <button className="btn btn-primary btn-block" onClick={() => setShowLesson(false)}>
+            <Icon name="flame" size={18} filled />
+            {ar.lesson.start}
+          </button>
+        </div>
+      </div>
+    );
+  }
+
   const q = session.question;
   if (!q) return null;
 
@@ -158,10 +208,18 @@ export function Play() {
     <div className="play">
       <div className="play-top">
         <div className="row-between">
-          <button className="btn btn-sm btn-ghost" onClick={() => navigate(-1)}>
-            <Icon name="arrowStart" size={17} />
-            {ar.play.quit}
-          </button>
+          <div className="row" style={{ gap: 6 }}>
+            <button className="btn btn-sm btn-ghost" onClick={() => navigate(-1)}>
+              <Icon name="arrowStart" size={17} />
+              {ar.play.quit}
+            </button>
+            {lesson && (
+              <button className="btn btn-sm btn-ghost" onClick={() => setShowLesson(true)}>
+                <Icon name="book" size={16} />
+                {ar.lesson.button}
+              </button>
+            )}
+          </div>
           <div className="hud">
             {session.combo >= 2 && (
               <span className="chip chip-hot">
