@@ -1,4 +1,4 @@
-import { useState } from 'react';
+﻿import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useStudentRequired } from '../state/StudentContext';
 import { units } from '../data/curriculum';
@@ -11,8 +11,8 @@ import {
 import { missionUnlocked, missionsFor } from '../engine/missions';
 import { Bar } from '../components/Bar';
 import { Icon, missionIcon } from '../components/Icon';
-import { ar, unitTitlesAr } from '../i18n/ar';
-import { missionSubtitle, missionTitle, missionTitleEn } from '../i18n/labels';
+import { ar } from '../i18n/ar';
+import { missionSubtitle, missionTitle } from '../i18n/labels';
 
 export function Journey() {
   const { student } = useStudentRequired();
@@ -58,13 +58,15 @@ export function Journey() {
                 <div style={{ minWidth: 0 }}>
                   <div className="row-between" style={{ gap: 8 }}>
                     <h3 style={{ whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
-                      {unitTitlesAr[unit.id]}
+                      {unit.title}
                     </h3>
-                    <span className="tiny dim num">{Math.round(completion * 100)}٪</span>
+                    <span className="tiny dim num">{Math.round(completion * 100)}%</span>
                   </div>
-                  <p className="tiny dim en-ui" style={{ margin: '1px 0 7px' }}>
-                    {unlocked ? unit.title : ''}
-                  </p>
+                  {unlocked && (
+                    <p className="tiny dim" style={{ margin: '1px 0 7px' }}>
+                      {unit.functions[0]}
+                    </p>
+                  )}
                   {!unlocked && (
                     <p className="tiny dim" style={{ margin: '1px 0 7px' }}>
                       {ar.journey.locked}
@@ -91,8 +93,7 @@ export function Journey() {
                         </span>
                         <span style={{ minWidth: 0 }}>
                           <span style={{ fontWeight: 600, display: 'block' }}>
-                            {missionTitle(m)}{' '}
-                            <bdi className="tiny dim en-ui">{missionTitleEn(m)}</bdi>
+                            {missionTitle(m)}
                           </span>
                           <span className="tiny dim">
                             {ok ? missionSubtitle(m) : ar.journey.lockedMission}
@@ -104,7 +105,7 @@ export function Journey() {
                           }`}
                         >
                           {score > 0 ? (
-                            <span className="num">{Math.round(score * 100)}٪</span>
+                            <span className="num">{Math.round(score * 100)}%</span>
                           ) : (
                             <span className="num">{m.length}</span>
                           )}

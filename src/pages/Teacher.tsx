@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState } from 'react';
+﻿import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useStudentRequired } from '../state/StudentContext';
 import {
@@ -15,7 +15,7 @@ import {
 } from '../services/teacherService';
 import { levelFromXp } from '../services/progressService';
 import { SKILL_ORDER } from '../data/curriculum';
-import { skillAr, skillColor } from '../i18n/labels';
+import { skillEn, skillColor } from '../i18n/labels';
 import { Bar } from '../components/Bar';
 import { Icon } from '../components/Icon';
 import { ar } from '../i18n/ar';
@@ -75,7 +75,7 @@ export function Teacher() {
 
   if (!isTeacher) {
     return (
-      <div className="page stack center" style={{ paddingTop: 60 }}>
+      <div className="page stack center ar-page" style={{ paddingTop: 60 }}>
         <h2>{ar.teacher.denied}</h2>
         <p className="muted">{ar.teacher.deniedNote}</p>
         <button className="btn btn-primary" onClick={() => navigate('/home')}>
@@ -147,7 +147,8 @@ export function Teacher() {
   };
 
   return (
-    <div className="page stack-lg">
+    /* The teacher is not the one learning English, so this whole page is Arabic. */
+    <div className="page stack-lg ar-page">
       <div className="page-head">
         <div>
           <div className="eyebrow">{ar.teacher.eyebrow}</div>
@@ -182,7 +183,7 @@ export function Teacher() {
             <div className="stat">
               <div className="eyebrow">{ar.teacher.classAccuracy}</div>
               <div className="big-num" style={{ marginTop: 6 }}>
-                {Math.round(stats.accuracy * 100)}٪
+                {Math.round(stats.accuracy * 100)}%
               </div>
               <p className="tiny muted num" style={{ margin: '4px 0 0' }}>
                 {stats.totalAnswers.toLocaleString('en-US')} {ar.teacher.answers}
@@ -195,7 +196,7 @@ export function Teacher() {
               <h3>{ar.teacher.skillsTitle}</h3>
               {stats.weakest && (
                 <span className="chip chip-hot">
-                  {ar.teacher.weakest} {skillAr(stats.weakest)}
+                  {ar.teacher.weakest} {skillEn(stats.weakest)}
                 </span>
               )}
             </div>
@@ -208,10 +209,10 @@ export function Teacher() {
                     <div className="row-between" style={{ marginBottom: 5 }}>
                       <span className="small row" style={{ gap: 7 }}>
                         <span className="skill-dot" style={{ background: skillColor(s) }} />
-                        {skillAr(s)}
+                        {skillEn(s)}
                       </span>
                       <span className="small muted num">
-                        {d.attempts ? `${pct}٪` : '—'}
+                        {d.attempts ? `${pct}%` : '—'}
                       </span>
                     </div>
                     <Bar percent={pct} thin />
@@ -294,7 +295,7 @@ export function Teacher() {
                   {ar.teacher.answers} <span className="num">{r.totalAnswers}</span>
                 </span>
                 <span className="chip chip-quiet">
-                  {ar.teacher.accuracy} <span className="num">{acc}٪</span>
+                  {ar.teacher.accuracy} <span className="num">{acc}%</span>
                 </span>
                 <span className="chip chip-quiet">
                   {ar.teacher.week} <span className="num">{r.weeklyXp}</span>
@@ -314,10 +315,10 @@ export function Teacher() {
                         <div className="row-between" style={{ marginBottom: 5 }}>
                           <span className="tiny row" style={{ gap: 6 }}>
                             <span className="skill-dot" style={{ background: skillColor(s) }} />
-                            {skillAr(s)}
+                            {skillEn(s)}
                           </span>
                           <span className="tiny muted num">
-                            {st?.attempts ? `${p}٪ · ${st.attempts}` : '—'}
+                            {st?.attempts ? `${p}% · ${st.attempts}` : '—'}
                           </span>
                         </div>
                         <Bar percent={p} thin />

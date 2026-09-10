@@ -103,7 +103,7 @@ export function Welcome() {
           </label>
 
           {error && (
-            <p className="small" style={{ margin: 0, color: 'var(--red)', fontWeight: 600 }}>
+            <p className="small ar" style={{ margin: 0, color: 'var(--red)', fontWeight: 600 }}>
               {error}
             </p>
           )}
@@ -113,7 +113,7 @@ export function Welcome() {
             {busy ? ar.auth.working : mode === 'register' ? ar.auth.registerAction : ar.auth.loginAction}
           </button>
 
-          <p className="tiny dim center" style={{ margin: 0 }}>
+          <p className="tiny dim center ar" style={{ margin: 0 }}>
             {mode === 'register' ? ar.auth.registerHint : ar.auth.loginHint}
           </p>
         </div>

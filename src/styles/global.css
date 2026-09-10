@@ -87,10 +87,11 @@ button {
 }
 input { font: inherit; }
 
-/* English content sits left-to-right inside the Arabic interface. */
+/* The interface is English; these mark the two exceptions. */
+
+/* English learning content — set in the reading face so the language being
+   studied looks different from the app talking to you. */
 .en {
-  direction: ltr;
-  text-align: left;
   font-family: var(--font-en);
   font-size: 1.06em;
 }
@@ -98,6 +99,21 @@ input { font: inherit; }
   direction: ltr;
   unicode-bidi: isolate;
   font-family: var(--font-ui);
+}
+
+/* Arabic teaching text (hints, explanations, rules) inside the English app. */
+.ar {
+  direction: rtl;
+  text-align: right;
+  unicode-bidi: isolate;
+}
+.ar-page {
+  direction: rtl;
+  text-align: right;
+}
+.ar-page .en-ui,
+.ar-page .num {
+  text-align: initial;
 }
 
 /* ---------- layout ---------- */
@@ -454,13 +470,12 @@ input { font: inherit; }
   border-inline-start: 4px solid var(--flame);
   border-radius: 4px;
 }
-.prompt-ar {
+/* An instruction rather than the question itself — quieter than a prompt. */
+.prompt-instruction {
   font-family: var(--font-ui);
-  direction: rtl;
-  text-align: right;
-  font-size: 1.05rem;
-  border-inline-start: 0;
-  border-inline-end: 4px solid var(--violet);
+  font-size: 1.02rem;
+  font-weight: 600;
+  border-inline-start-color: var(--violet);
 }
 
 .option {

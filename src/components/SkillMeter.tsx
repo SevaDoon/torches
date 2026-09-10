@@ -1,7 +1,7 @@
 import type { Skill, Student } from '../types';
 import { SKILL_ORDER } from '../data/curriculum';
 import { skillAccuracy } from '../services/progressService';
-import { skillAr, skillColor, skillEn } from '../i18n/labels';
+import { skillColor, skillEn } from '../i18n/labels';
 import { Bar } from './Bar';
 
 export function SkillMeter({ student, skill }: { student: Student; skill: Skill }) {
@@ -12,10 +12,9 @@ export function SkillMeter({ student, skill }: { student: Student; skill: Skill 
       <div className="row-between" style={{ marginBottom: 5 }}>
         <span className="small row" style={{ gap: 7 }}>
           <span className="skill-dot" style={{ background: skillColor(skill) }} />
-          {skillAr(skill)}
-          <bdi className="tiny dim en-ui">{skillEn(skill)}</bdi>
+          {skillEn(skill)}
         </span>
-        <span className="small muted num">{stat.attempts === 0 ? '—' : `${pct}٪`}</span>
+        <span className="small muted num">{stat.attempts === 0 ? '—' : `${pct}%`}</span>
       </div>
       <Bar percent={pct} thin />
     </div>

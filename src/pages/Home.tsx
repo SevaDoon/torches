@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+﻿import { useEffect, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useStudentRequired } from '../state/StudentContext';
 import { Torch, TorchTierName } from '../components/Torch';
@@ -15,8 +15,8 @@ import {
 } from '../services/progressService';
 import { loadLeaderboard, rankOf } from '../services/leaderboardService';
 import { missionUnlocked, missionsFor } from '../engine/missions';
-import { ar, unitTitlesAr } from '../i18n/ar';
-import { missionTitle, skillAr } from '../i18n/labels';
+import { ar } from '../i18n/ar';
+import { missionTitle, skillEn } from '../i18n/labels';
 
 export function Home() {
   const { student } = useStudentRequired();
@@ -86,8 +86,7 @@ export function Home() {
               {missionTitle(next)}
             </h2>
             <p className="small" style={{ margin: '4px 0 0', opacity: 0.85 }}>
-              {ar.unit} <span className="num">{unit.number}</span> · {unitTitlesAr[unit.id]}{' '}
-              <bdi className="en-ui tiny">{unit.title}</bdi>
+              {ar.unit} <span className="num">{unit.number}</span> · {unit.title}
             </p>
           </div>
           <span
@@ -130,7 +129,7 @@ export function Home() {
           <div className="eyebrow">{ar.home.recommended}</div>
           <div className="row" style={{ marginTop: 8, gap: 8, fontWeight: 700 }}>
             <Icon name={missionIcon('skill', weak)} size={20} />
-            {ar.home.improve(skillAr(weak))}
+            {ar.home.improve(skillEn(weak))}
           </div>
           <p className="tiny muted" style={{ margin: '6px 0 0' }}>{ar.home.weakest}</p>
         </Link>

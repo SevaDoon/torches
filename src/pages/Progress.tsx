@@ -9,7 +9,7 @@ import {
 import { Bar } from '../components/Bar';
 import { Icon } from '../components/Icon';
 import { SkillMeters } from '../components/SkillMeter';
-import { ar, unitTitlesAr } from '../i18n/ar';
+import { ar } from '../i18n/ar';
 
 export function Progress() {
   const { student } = useStudentRequired();
@@ -36,7 +36,7 @@ export function Progress() {
         <div className="stat">
           <div className="eyebrow">{ar.progress.accuracy}</div>
           <div className="big-num" style={{ marginTop: 6 }}>
-            {Math.round(overallAccuracy(student) * 100)}٪
+            {Math.round(overallAccuracy(student) * 100)}%
           </div>
           <p className="tiny muted" style={{ margin: '4px 0 0' }}>
             {ar.progress.ofAnswers(student.totalCorrect, student.totalAnswers)}
@@ -72,10 +72,9 @@ export function Progress() {
               <div className="row-between" style={{ marginBottom: 8 }}>
                 <span className="small row" style={{ fontWeight: 600, gap: 6 }}>
                   {locked && <Icon name="lock" size={15} />}
-                  <span className="num">{u.number}</span>. {unitTitlesAr[u.id]}{' '}
-                  <bdi className="tiny dim en-ui">{u.title}</bdi>
+                  <span className="num">{u.number}</span>. {u.title}
                 </span>
-                <span className="tiny muted num">{pct}٪</span>
+                <span className="tiny muted num">{pct}%</span>
               </div>
               <Bar percent={pct} thin />
             </div>

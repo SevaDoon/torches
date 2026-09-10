@@ -213,7 +213,8 @@ export function useSession(
         retry: false,
         xp: 0,
         breakdown: [],
-        message: question.explanation,
+        // She just got it wrong twice — this is the moment Arabic matters most.
+        message: explanationOf(question),
       });
       setStatus('feedback');
     },

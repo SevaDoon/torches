@@ -1,7 +1,7 @@
-import { useCallback, useMemo, useState } from 'react';
+﻿import { useCallback, useMemo, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { useStudentRequired } from '../state/StudentContext';
-import { GameSurface } from '../games';
+import { GAME_NAMES, GameSurface } from '../games';
 import {
   HINT_LABELS,
   hintText,
@@ -16,7 +16,7 @@ import { applyAnswer, applyMissionResult } from '../services/studentService';
 import { Blocks } from '../components/Bar';
 import { Icon, missionIcon } from '../components/Icon';
 import { ar } from '../i18n/ar';
-import { missionTitle, skillAr, skillColor, skillEn } from '../i18n/labels';
+import { missionTitle, skillEn, skillColor } from '../i18n/labels';
 
 export function Play() {
   const { unitId = '', missionKey = '' } = useParams();
@@ -126,7 +126,7 @@ export function Play() {
           <div className="grid-2">
             <div className="stat">
               <div className="eyebrow">{ar.results.accuracy}</div>
-              <div className="big-num" style={{ marginTop: 6 }}>{pct}٪</div>
+              <div className="big-num" style={{ marginTop: 6 }}>{pct}%</div>
               <p className="tiny muted" style={{ margin: '4px 0 0' }}>
                 {ar.results.ofRight(summary.correct, session.total)}
               </p>
@@ -166,11 +166,11 @@ export function Play() {
         <div className="stack-lg" style={{ margin: 'auto 0' }}>
           <div className="center">
             <div className="eyebrow" style={{ justifyContent: 'center' }}>{ar.lesson.tag}</div>
-            <h1 style={{ marginTop: 8 }}>{lesson.title}</h1>
+            <h1 className="ar" style={{ marginTop: 8 }}>{lesson.title}</h1>
           </div>
 
           <div className="card card-lg">
-            <p className="small" style={{ margin: 0 }}>{lesson.rule}</p>
+            <p className="small ar" style={{ margin: 0 }}>{lesson.rule}</p>
             <div className="divider" />
             <div className="eyebrow" style={{ marginBottom: 8 }}>{ar.lesson.examples}</div>
             {lesson.examples.map((e, i) => (
@@ -180,7 +180,7 @@ export function Play() {
             ))}
           </div>
 
-          <p className="tiny dim center" style={{ margin: 0 }}>{ar.lesson.note}</p>
+          <p className="tiny dim center ar" style={{ margin: 0 }}>{ar.lesson.note}</p>
 
           <button className="btn btn-primary btn-block" onClick={() => setShowLesson(false)}>
             <Icon name="flame" size={18} filled />
@@ -272,22 +272,19 @@ export function Play() {
       <div className="question-card" key={q.id}>
         <div className="row wrap" style={{ gap: 7, marginBottom: 12 }}>
           <span className="chip" style={{ background: skillColor(q.skill), color: 'var(--paper-2)' }}>
-            {skillAr(q.skill)}
+            {skillEn(q.skill)}
           </span>
-          <span className="chip chip-quiet en-ui">{skillEn(q.skill)}</span>
+          <span className="chip chip-quiet">{GAME_NAMES[q.type]}</span>
           <span className="chip chip-quiet">{ar.play.difficulty[q.difficulty - 1]}</span>
         </div>
 
         {/* Word Hunt draws the sentence itself, and the picture games say
-            everything in the drawing — so these only get the Arabic
-            instruction, with no redundant English line under it. */}
+            everything in the drawing — so those get the short instruction only,
+            never the sentence twice. */}
         {q.type === 'blank' || q.type === 'picture' || q.type === 'picmatch' ? (
           <p className="small muted" style={{ marginBottom: 12 }}>{instruction}</p>
         ) : instruction ? (
-          <>
-            <div className="prompt prompt-ar">{instruction}</div>
-            <p className="tiny dim en-ui" style={{ margin: '-8px 0 12px' }}>{q.prompt}</p>
-          </>
+          <div className="prompt prompt-instruction">{instruction}</div>
         ) : (
           <div className="prompt">{q.prompt}</div>
         )}
@@ -305,7 +302,7 @@ export function Play() {
               <Icon name="bulb" size={15} />
               {hint.label}
             </div>
-            <div className="small" style={{ marginTop: 3 }}>{hint.text}</div>
+            <div className="small ar" style={{ marginTop: 3 }}>{hint.text}</div>
           </div>
         )}
 
@@ -349,7 +346,9 @@ export function Play() {
               <strong className="muted">
                 {session.feedback.retry ? ar.play.remember : ar.play.why}{' '}
               </strong>
-              {session.feedback.message}
+              <span className="ar" style={{ display: 'block', marginTop: 2 }}>
+                {session.feedback.message}
+              </span>
             </p>
 
             {session.feedback.breakdown.length > 1 && (
@@ -379,10 +378,10 @@ export function Play() {
         <div className="sheet">
           <div className="sheet-inner stack">
             <div className="eyebrow">{ar.play.rescueTag}</div>
-            <h2>{session.rescueLesson.title}</h2>
-            <p className="small muted" style={{ margin: 0 }}>{ar.play.rescueIntro}</p>
+            <h2 className="ar">{session.rescueLesson.title}</h2>
+            <p className="small muted ar" style={{ margin: 0 }}>{ar.play.rescueIntro}</p>
             <div className="card card-quiet">
-              <p className="small" style={{ margin: 0 }}>{session.rescueLesson.rule}</p>
+              <p className="small ar" style={{ margin: 0 }}>{session.rescueLesson.rule}</p>
               <div className="divider" />
               {session.rescueLesson.examples.map((e, i) => (
                 <p key={i} className="small en" style={{ margin: '3px 0' }}>

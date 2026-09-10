@@ -1,4 +1,4 @@
-import { useNavigate } from 'react-router-dom';
+﻿import { useNavigate } from 'react-router-dom';
 import { useStudentRequired } from '../state/StudentContext';
 import { SKILL_ORDER, questionsFor } from '../data/curriculum';
 import { currentUnitId, skillAccuracy, weakestSkill } from '../services/progressService';
@@ -7,7 +7,7 @@ import { Icon, missionIcon } from '../components/Icon';
 import { GAME_NAMES } from '../games';
 import type { Question } from '../types';
 import { ar } from '../i18n/ar';
-import { skillAr, skillEn } from '../i18n/labels';
+import { skillEn } from '../i18n/labels';
 
 const GAMES_BY_SKILL: Record<string, Array<Question['type']>> = {
   grammar: ['mcq', 'order', 'error', 'blank'],
@@ -44,9 +44,7 @@ export function Skills() {
                   <Icon name={missionIcon('skill', skill)} size={20} />
                 </span>
                 <div>
-                  <h3>
-                    {skillAr(skill)} <bdi className="tiny dim en-ui">{skillEn(skill)}</bdi>
-                  </h3>
+                  <h3>{skillEn(skill)}</h3>
                   <p className="tiny dim" style={{ margin: 0 }}>
                     {ar.skillsPage.answered(stat.attempts, stat.correct)}
                   </p>
@@ -71,7 +69,7 @@ export function Skills() {
               disabled={inUnit === 0}
               onClick={() => navigate(`/play/${unitId}/${skill}`)}
             >
-              {ar.skillsPage.practise(skillAr(skill))}
+              {ar.skillsPage.practise(skillEn(skill))}
             </button>
           </section>
         );

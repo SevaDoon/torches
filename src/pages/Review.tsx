@@ -1,10 +1,10 @@
-import { useNavigate } from 'react-router-dom';
+﻿import { useNavigate } from 'react-router-dom';
 import { useStudentRequired } from '../state/StudentContext';
 import { getQuestion, getUnit } from '../data/curriculum';
 import type { Skill } from '../types';
 import { Icon } from '../components/Icon';
 import { ar } from '../i18n/ar';
-import { skillAr, skillColor } from '../i18n/labels';
+import { skillEn, skillColor } from '../i18n/labels';
 
 export function Review() {
   const { student } = useStudentRequired();
@@ -63,7 +63,7 @@ export function Review() {
               {Object.entries(bySkill).map(([skill, n]) => (
                 <span key={skill} className="chip">
                   <span className="skill-dot" style={{ background: skillColor(skill as Skill) }} />
-                  {skillAr(skill as Skill)} · <span className="num">{n}</span>
+                  {skillEn(skill as Skill)} · <span className="num">{n}</span>
                 </span>
               ))}
             </div>
@@ -80,7 +80,7 @@ export function Review() {
                       className="chip"
                       style={{ background: skillColor(q.skill), color: 'var(--paper-2)' }}
                     >
-                      {skillAr(q.skill)}
+                      {skillEn(q.skill)}
                     </span>
                     <span className="chip chip-quiet">
                       {ar.unit} <span className="num">{unit?.number}</span>

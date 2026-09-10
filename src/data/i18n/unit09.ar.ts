@@ -1,4 +1,4 @@
-import type { UnitAr } from './index';
+﻿import type { UnitAr } from './index';
 
 export const unit09ar: UnitAr = {
   lessons: [
@@ -169,7 +169,7 @@ export const unit09ar: UnitAr = {
       ],
     },
     'unit-9-q020': {
-      ex: 'صفٌّ واحد من خمسة يساوي ٢٠٪، فيبقى ٨٠٪ لصفٍّ أبطأ.',
+      ex: 'صفٌّ واحد من خمسة يساوي ٢٠%، فيبقى ٨٠% لصفٍّ أبطأ.',
       h: [
         'النص يذكر الرقمين في الجملة نفسها.',
         'النسب المئوية في النص سريعة في المسح.',
