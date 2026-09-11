@@ -37,7 +37,7 @@ function PlayRoute() {
 }
 
 function Routed() {
-  const { student, loading } = useStudent();
+  const { student, loading, guest } = useStudent();
   const { pathname } = useLocation();
 
   if (loading) return <Splash />;
@@ -57,6 +57,8 @@ function Routed() {
 
   return (
     <div className={playing ? '' : 'shell'}>
+      {/* A visitor should never wonder whether any of this is being recorded. */}
+      {guest && !playing && <div className="guest-bar ar">{ar.guest.bar}</div>}
       <Routes>
         <Route path="/welcome" element={<Navigate to="/home" replace />} />
         <Route path="/login-or-start" element={<Navigate to="/home" replace />} />

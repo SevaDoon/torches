@@ -7,6 +7,23 @@ import { setAuthToken } from './firestoreRest';
 
 const ID_ALPHABET = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789'; // no I, O, 0, 1 — easier to read aloud
 
+/*
+ * The class code. A student needs it once, to create her account: the teacher
+ * reads it out in class, so the leaderboard stays the real class and not
+ * whoever happens to find the link.
+ *
+ * ponytail: checked in the browser, so it stops casual and accidental signups,
+ * not a determined one. Enforcing it in the Firestore rules would mean storing
+ * the code inside every student record - worth doing only if someone actually
+ * bothers to bypass this.
+ */
+export const CLASS_CODE = 'TORCH25';
+
+/** The visitor's record: in memory only, never saved, never ranked. */
+export const GUEST_ID = 'guest';
+
+export const isGuest = (student: Student) => student.id === GUEST_ID;
+
 export const AVATARS = ['🔥', '⭐', '🌙', '🚀', '🦋', '🌸', '🐬', '🍀', '💎', '🎨', '📚', '⚡'];
 
 /** TOR-A82F91 — the friendly code shown in the profile. Not the storage key. */
@@ -63,6 +80,17 @@ function migrate(s: Student): Student {
   };
 }
 
+export function guestStudent(): Student {
+  return { ...blankStudent('Visitor', GUEST_ID), code: 'VISITOR', avatar: '👁' };
+}
+
+/** Signs in as the visitor and hands back a record nothing will ever write. */
+export async function startGuest(): Promise<Student> {
+  const session = await auth.signInVisitor();
+  setAuthToken(session.idToken);
+  return guestStudent();
+}
+
 /**
  * Called once on boot. Turns a saved refresh token back into a live session, so
  * a student who played yesterday lands straight on her own dashboard.
@@ -71,12 +99,18 @@ export async function loadCurrentStudent(): Promise<Student | null> {
   const session = await auth.restoreSession();
   if (!session) return null;
   setAuthToken(session.idToken);
+  if (auth.isVisitorSession()) return guestStudent();
   const student = await driver.loadStudent(session.uid);
   return student ? migrate(student) : null;
 }
 
 /** First time: creates the account. Throws AuthError('EMAIL_EXISTS') if taken. */
-export async function registerStudent(name: string, pin: string): Promise<Student> {
+export async function registerStudent(
+  name: string,
+  pin: string,
+  classCode: string,
+): Promise<Student> {
+  if (classCode.trim().toUpperCase() !== CLASS_CODE) throw new Error('BAD_CLASS_CODE');
   const session = await auth.signUp(name, pin);
   setAuthToken(session.idToken);
   const student = blankStudent(name, session.uid);
@@ -98,6 +132,7 @@ export async function loginStudent(name: string, pin: string): Promise<Student> 
 }
 
 export async function persist(student: Student): Promise<void> {
+  if (isGuest(student)) return; // a visit leaves nothing behind
   await driver.saveStudent(student);
 }
 

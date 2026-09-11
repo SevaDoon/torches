@@ -14,13 +14,16 @@ import { getPassage, getUnit, lessonFor } from '../data/curriculum';
 import { localizeLesson } from '../data/i18n';
 import { applyAnswer, applyMissionResult } from '../services/studentService';
 import { Blocks } from '../components/Bar';
+import { Speak } from '../components/Speak';
 import { Icon, missionIcon } from '../components/Icon';
 import { ar } from '../i18n/ar';
 import { missionTitle, skillEn, skillColor } from '../i18n/labels';
+import { useCanSpeak } from '../utils/speech';
 
 export function Play() {
   const { unitId = '', missionKey = '' } = useParams();
   const { student, update, celebrate, toast } = useStudentRequired();
+  const canSpeak = useCanSpeak();
   const navigate = useNavigate();
   const [summary, setSummary] = useState<SessionSummary | null>(null);
   const [marks, setMarks] = useState<Array<'ok' | 'miss'>>([]);
@@ -175,7 +178,7 @@ export function Play() {
             <div className="eyebrow" style={{ marginBottom: 8 }}>{ar.lesson.examples}</div>
             {lesson.examples.map((e, i) => (
               <p key={i} className="small en" style={{ margin: '4px 0' }}>
-                {e}
+                <Speak text={e} />
               </p>
             ))}
           </div>
@@ -200,6 +203,8 @@ export function Play() {
   const canHint = session.hintLevel < maxHintLevel(q) && session.status === 'question';
   const nextHintLabel = HINT_LABELS[Math.min(session.hintLevel, HINT_LABELS.length - 1)];
   const instruction = ar.play.instructions[q.type];
+  // The types whose English is prose on the screen rather than tappable answers.
+  const speakable = q.type === 'mcq' || q.type === 'truefalse' || q.type === 'blank';
   const blocks: Array<'todo' | 'ok' | 'miss'> = Array.from({ length: session.total }, (_, i) =>
     i < marks.length ? marks[i] : 'todo',
   );
@@ -263,7 +268,9 @@ export function Play() {
           </div>
           <div className={`passage${passageOpen ? ' open' : ''}`}>
             {passage.paragraphs.map((p, i) => (
-              <p key={i}>{p}</p>
+              <p key={i}>
+                <Speak text={p} />
+              </p>
             ))}
           </div>
         </div>
@@ -286,7 +293,14 @@ export function Play() {
         ) : instruction ? (
           <div className="prompt prompt-instruction">{instruction}</div>
         ) : (
-          <div className="prompt">{q.prompt}</div>
+          <div className="prompt">
+            <Speak text={q.prompt} />
+          </div>
+        )}
+
+        {/* The words are quiet until touched, so the offer has to be written. */}
+        {canSpeak && speakable && (
+          <p className="tiny dim ar" style={{ margin: '-8px 0 12px' }}>{ar.play.tapWord}</p>
         )}
 
         <GameSurface
@@ -385,7 +399,7 @@ export function Play() {
               <div className="divider" />
               {session.rescueLesson.examples.map((e, i) => (
                 <p key={i} className="small en" style={{ margin: '3px 0' }}>
-                  {e}
+                  <Speak text={e} />
                 </p>
               ))}
             </div>

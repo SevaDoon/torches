@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import type { BlankQuestion } from '../types';
 import type { GameProps } from './types';
+import { Words } from '../components/Speak';
 import { ar } from '../i18n/ar';
 
 /** Normalizes an answer so spelling variants and stray punctuation still pass. */
@@ -30,9 +31,9 @@ export function WordType({ question, locked, onAnswer }: GameProps<BlankQuestion
   return (
     <div className="stack">
       <div className="card card-quiet en" style={{ fontSize: '1.1rem', lineHeight: 1.7 }}>
-        {before}
+        <Words text={before} />
         <strong style={{ color: 'var(--flame)' }}>{value ? ` ${value} ` : ' ______ '}</strong>
-        {after ?? ''}
+        <Words text={after ?? ''} />
       </div>
       <input
         className="field en"

@@ -941,3 +941,50 @@ input { font: inherit; }
     transition-duration: 0.01ms !important;
   }
 }
+
+/* ---------- read aloud ---------- */
+
+/* One word of English, tappable for its pronunciation. Quiet until touched:
+   the sentence has to keep reading like a sentence. */
+.w {
+  padding: 0 1px;
+  border-radius: 3px;
+  border-bottom: 2px solid transparent;
+  line-height: inherit;
+}
+.w:hover { border-bottom-color: var(--flame); }
+.w:active { background: var(--amber); border-bottom-color: var(--flame); }
+
+.speak-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 30px;
+  height: 30px;
+  margin-inline-start: 8px;
+  vertical-align: -8px;
+  border-radius: 999px;
+  background: var(--paper-2);
+  border: 1.5px solid var(--ink);
+  color: var(--ink);
+}
+.speak-btn:hover { background: var(--amber); }
+.speak-btn:active { background: var(--flame); color: var(--paper-2); }
+
+/* ---------- visitor mode ---------- */
+
+.guest-bar {
+  position: sticky;
+  top: 0;
+  z-index: 40;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 7px 14px;
+  background: var(--ink);
+  color: var(--paper-2);
+  font-size: 0.78rem;
+  font-weight: 600;
+  text-align: center;
+}

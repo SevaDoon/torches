@@ -12,6 +12,7 @@ const IDENTITY = 'https://identitytoolkit.googleapis.com/v1/accounts';
 const SECURE_TOKEN = 'https://securetoken.googleapis.com/v1/token';
 
 const K_REFRESH = 'torches.refreshToken';
+const K_VISITOR = 'torches.visitor';
 
 export interface Session {
   uid: string;
@@ -70,6 +71,37 @@ export async function signUp(name: string, pin: string): Promise<Session> {
   return { uid: r.localId, idToken: r.idToken };
 }
 
+/*
+ * The visitor account. Firestore will not answer an unauthenticated read, so
+ * someone who only wants to look at the class still needs a sign-in — this one
+ * belongs to nobody. The app never writes a student record for it, so a visit
+ * leaves no trace and never reaches the leaderboard.
+ */
+const VISITOR_NAME = '__torches_visitor__';
+const VISITOR_PIN = '730514';
+
+export async function signInVisitor(): Promise<Session> {
+  // First visit ever creates it; every visit after that signs in.
+  const session = await signIn(VISITOR_NAME, VISITOR_PIN).catch(() =>
+    signUp(VISITOR_NAME, VISITOR_PIN),
+  );
+  try {
+    localStorage.setItem(K_VISITOR, '1');
+  } catch {
+    /* private mode — the visit still works until the tab closes */
+  }
+  return session;
+}
+
+/** True when the restored session belongs to a visitor, not a student. */
+export function isVisitorSession(): boolean {
+  try {
+    return localStorage.getItem(K_VISITOR) === '1';
+  } catch {
+    return false;
+  }
+}
+
 export async function signIn(name: string, pin: string): Promise<Session> {
   const r = await identityCall('signInWithPassword', {
     email: await emailFor(name),
@@ -111,6 +143,7 @@ export async function restoreSession(): Promise<Session | null> {
 export function forgetSession() {
   try {
     localStorage.removeItem(K_REFRESH);
+    localStorage.removeItem(K_VISITOR);
   } catch {
     /* ignore */
   }

@@ -8,6 +8,9 @@
  *   - the hint ladder and the explanation after a wrong answer (data/i18n)
  *   - the grammar rule screens
  *   - sign-in errors, so nobody gets locked out by a sentence she can't read
+ *   - the read-aloud tip, because the student who cannot read it is exactly the
+ *     one the feature is for
+ *   - the visitor banner, read by a guest who is not learning English
  *   - delete / reset confirmations, where a misread is destructive
  *   - the whole teacher panel — the teacher is not the one learning English
  *
@@ -165,6 +168,7 @@ export const ar = {
     trayHint: 'Tap the words below in the right order…',
     shouldBe: 'It should be:',
     tapWrong: 'Tap the wrong word',
+    tapWord: 'اضغطي على أي كلمة لتسمعي نطقها.',
     expand: 'Expand',
     collapse: 'Collapse',
     difficulty: ['Easy', 'Medium', 'Hard'],
@@ -237,6 +241,9 @@ export const ar = {
     denied: 'هذه الصفحة للمعلّمة فقط',
     deniedNote: 'حسابك لا يملك صلاحية إدارة الصف.',
     backHome: 'العودة للرئيسية',
+    classCode: 'رمز الانضمام للصف',
+    classCodeNote:
+      'تحتاجه الطالبة مرة واحدة عند إنشاء حسابها. أعطيه لطالباتك فقط — هو ما يمنع الحسابات التجريبية من الدخول للمنافسة.',
   },
 
   lesson: {
@@ -258,6 +265,11 @@ export const ar = {
     loginAction: 'Sign in',
     registerAction: 'Create account',
     working: 'One moment…',
+    classCodeLabel: 'Class code',
+    classCodePlaceholder: 'من معلّمتك',
+    badCode: 'رمز الصف غير صحيح. اطلبيه من معلّمتك.',
+    visitAction: 'Visit as a guest',
+    visitNote: 'للاطّلاع على الموقع ولوحة الترتيب دون حساب — لا يُحفظ تقدّم ولا يظهر الزائر في المنافسة.',
     loginHint: 'ادخلي بنفس الاسم والرمز من أي جهاز ويرجع لك تقدّمك كاملاً.',
     registerHint: 'احفظي اسمك ورمزك — فيهما تدخلين كل مرة، ولا يضيع مجهودك.',
     nameTaken: 'هذا الاسم مسجّل من قبل. إن كان حسابك فاختاري «Sign in»، وإلا غيّري الاسم.',
@@ -279,6 +291,7 @@ export const ar = {
     weekNote: 'in the last 7 days',
     me: '· you',
     note: 'Ranking follows your player ID, not your name — renaming never moves you.',
+    guestNote: 'هذا ترتيب الطالبات الفعلي. حساب الزائر لا يُحتسب ولا يظهر في القائمة.',
     loading: 'Loading the board…',
   },
 
@@ -351,6 +364,14 @@ export const ar = {
     welcomeBack: (name: string) => `Welcome back, ${name}.`,
     levelUp: (n: number) => `Level up! You reached level ${n}.`,
     achievement: (title: string) => `Achievement unlocked — ${title}`,
+  },
+
+  /* The visitor is a guest of the school, not a learner of English. */
+  guest: {
+    bar: 'وضع الزائر — تصفّح فقط، لا يُحفظ تقدّم ولا يظهر الزائر في الترتيب',
+    title: 'وضع الزائر',
+    note: 'أنتِ تتصفّحين الموقع كزائرة: تستطيعين الاطّلاع على الوحدات وتجربة أي تحدٍّ ورؤية ترتيب الطالبات. لا يُحفظ أي تقدّم، ولا يُنشأ حساب، ولا تظهرين في المنافسة.',
+    exit: 'إنهاء وضع الزائر',
   },
 
   notFound: "That challenge doesn't exist.",

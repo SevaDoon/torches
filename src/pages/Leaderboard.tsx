@@ -8,7 +8,7 @@ import { ar } from '../i18n/ar';
 const MEDAL_COLOR = ['var(--amber)', 'var(--ink-3)', 'var(--flame)'];
 
 export function Leaderboard() {
-  const { student } = useStudentRequired();
+  const { student, guest } = useStudentRequired();
   const [rows, setRows] = useState<LeaderboardRow[] | null>(null);
   const [mode, setMode] = useState<'all' | 'week'>('all');
 
@@ -47,23 +47,31 @@ export function Leaderboard() {
         </button>
       </div>
 
-      <div className="card card-lg card-hot">
-        <div className="row-between">
-          <div>
-            <div className="eyebrow">{ar.leaderboard.you}</div>
-            <div className="big-num" style={{ marginTop: 6 }}>#{place}</div>
-          </div>
-          <div style={{ textAlign: 'end' }}>
-            <div style={{ fontWeight: 700 }} className="num">
-              {(mode === 'all' ? (me?.xp ?? student.xp) : (me?.weeklyXp ?? 0)).toLocaleString('en-US')}{' '}
-              {ar.xp}
+      {guest ? (
+        <div className="card card-lg">
+          <p className="small ar" style={{ margin: 0 }}>{ar.leaderboard.guestNote}</p>
+        </div>
+      ) : (
+        <div className="card card-lg card-hot">
+          <div className="row-between">
+            <div>
+              <div className="eyebrow">{ar.leaderboard.you}</div>
+              <div className="big-num" style={{ marginTop: 6 }}>#{place}</div>
             </div>
-            <div className="tiny" style={{ opacity: 0.85 }}>
-              {mode === 'all' ? ar.leaderboard.allTimeNote : ar.leaderboard.weekNote}
+            <div style={{ textAlign: 'end' }}>
+              <div style={{ fontWeight: 700 }} className="num">
+                {(mode === 'all' ? (me?.xp ?? student.xp) : (me?.weeklyXp ?? 0)).toLocaleString(
+                  'en-US',
+                )}{' '}
+                {ar.xp}
+              </div>
+              <div className="tiny" style={{ opacity: 0.85 }}>
+                {mode === 'all' ? ar.leaderboard.allTimeNote : ar.leaderboard.weekNote}
+              </div>
             </div>
           </div>
         </div>
-      </div>
+      )}
 
       <div className="stack" style={{ gap: 8 }}>
         {sorted.map((r, i) => (

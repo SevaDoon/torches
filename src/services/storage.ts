@@ -62,14 +62,29 @@ export const firestoreDriver: TorchesDriver = {
   },
   async loadRoster() {
     try {
-      const rows = await queryTop<Student & { weeklyXp: number }>('students', 'xp', 50);
-      return rows.map((r) => ({
-        id: r.id,
-        name: r.name,
-        avatar: r.avatar,
-        xp: r.xp,
-        weeklyXp: r.weeklyXp ?? 0,
-      }));
+      const rows = await queryTop<Partial<Student> & { weeklyXp?: number }>(
+        'students',
+        'xp',
+        60,
+        ['id', 'name', 'avatar', 'xp', 'weeklyXp', 'totalAnswers'],
+      );
+      return (
+        rows
+          /*
+           * Real players only. An account that has never answered a question is
+           * a test account or an abandoned signup, and neither of those belongs
+           * on a board meant to show the class competing. The teacher still
+           * sees every account on her own screen.
+           */
+          .filter((r) => (r.totalAnswers ?? 0) > 0)
+          .map((r) => ({
+            id: r.id ?? '',
+            name: r.name ?? '',
+            avatar: r.avatar ?? '🔥',
+            xp: r.xp ?? 0,
+            weeklyXp: r.weeklyXp ?? 0,
+          }))
+      );
     } catch {
       return [];
     }

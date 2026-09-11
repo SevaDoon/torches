@@ -10,11 +10,13 @@ import {
 } from 'react';
 import type { Student } from '../types';
 import {
+  isGuest,
   loadCurrentStudent,
   loginStudent,
   persist,
   registerStudent,
   signOut as signOutStudent,
+  startGuest,
 } from '../services/studentService';
 import { isTeacher as checkTeacher } from '../services/teacherService';
 import { levelFromXp } from '../services/progressService';
@@ -33,10 +35,14 @@ interface Ctx {
   loading: boolean;
   /** True when this account also has a /teachers document. */
   isTeacher: boolean;
-  /** Create a new account with a name and a PIN. */
-  register: (name: string, pin: string) => Promise<void>;
+  /** True while looking around as a visitor: nothing is saved, nothing is ranked. */
+  guest: boolean;
+  /** Create a new account with a name, a PIN and the class code. */
+  register: (name: string, pin: string, classCode: string) => Promise<void>;
   /** Sign back in on any device with the same name and PIN. */
   login: (name: string, pin: string) => Promise<void>;
+  /** Look around without an account: she may try anything, nothing is kept. */
+  enterAsGuest: () => Promise<void>;
   /** Sign out and return to the welcome screen. */
   leave: () => Promise<void>;
   /** Every change to the student goes through here: it saves, and it celebrates. */
@@ -67,7 +73,7 @@ export function StudentProvider({ children }: { children: ReactNode }) {
 
   // Teacher status is a property of the account, so re-check whenever it changes.
   useEffect(() => {
-    if (!student) {
+    if (!student || isGuest(student)) {
       setIsTeacher(false);
       return;
     }
@@ -86,8 +92,8 @@ export function StudentProvider({ children }: { children: ReactNode }) {
   }, []);
 
   const register = useCallback(
-    async (name: string, pin: string) => {
-      const s = await registerStudent(name, pin);
+    async (name: string, pin: string, classCode: string) => {
+      const s = await registerStudent(name, pin, classCode);
       setStudent(s);
       setSoundEnabled(s.soundOn);
       toast('🔥', ar.toasts.welcome(s.name));
@@ -104,6 +110,10 @@ export function StudentProvider({ children }: { children: ReactNode }) {
     },
     [toast],
   );
+
+  const enterAsGuest = useCallback(async () => {
+    setStudent(await startGuest());
+  }, []);
 
   const leave = useCallback(async () => {
     await signOutStudent();
@@ -139,9 +149,39 @@ export function StudentProvider({ children }: { children: ReactNode }) {
     [toast],
   );
 
+  const guest = !!student && isGuest(student);
+
   const value = useMemo(
-    () => ({ student, loading, isTeacher, register, login, leave, update, toast, toasts, celebrate, celebrating }),
-    [student, loading, isTeacher, register, login, leave, update, toast, toasts, celebrate, celebrating],
+    () => ({
+      student,
+      loading,
+      isTeacher,
+      guest,
+      register,
+      login,
+      enterAsGuest,
+      leave,
+      update,
+      toast,
+      toasts,
+      celebrate,
+      celebrating,
+    }),
+    [
+      student,
+      loading,
+      isTeacher,
+      guest,
+      register,
+      login,
+      enterAsGuest,
+      leave,
+      update,
+      toast,
+      toasts,
+      celebrate,
+      celebrating,
+    ],
   );
 
   return <StudentCtx.Provider value={value}>{children}</StudentCtx.Provider>;

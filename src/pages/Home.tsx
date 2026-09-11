@@ -117,8 +117,10 @@ export function Home() {
       <div className="grid-2">
         <Link to="/leaderboard" className="card tappable" style={{ textDecoration: 'none' }}>
           <div className="eyebrow">{ar.home.rank}</div>
+          {/* place 0 means "not on the board": a visitor, or a brand-new
+              account the roster has not caught up with yet. */}
           <div className="big-num" style={{ marginTop: 8 }}>
-            {rank ? `#${rank.place}` : '—'}
+            {rank && rank.place > 0 ? `#${rank.place}` : '—'}
           </div>
           <p className="tiny muted" style={{ margin: '6px 0 0' }}>
             {rank ? ar.home.ofPlayers(rank.of) : '…'}

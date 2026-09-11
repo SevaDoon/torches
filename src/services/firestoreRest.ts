@@ -92,11 +92,18 @@ export async function deleteDocument(collection: string, id: string) {
   if (!res.ok) throw new Error(`Firestore delete failed: ${res.status}`);
 }
 
-/** Top `limit` documents in `collection`, ordered by `orderByField` descending. */
+/**
+ * Top `limit` documents in `collection`, ordered by `orderByField` descending.
+ *
+ * `fields` asks Firestore for those fields only. The leaderboard needs five of
+ * them out of a record that also carries every answer the student has ever
+ * missed, so this is the difference between a small response and a huge one.
+ */
 export async function queryTop<T>(
   collection: string,
   orderByField: string,
   limit: number,
+  fields?: string[],
 ): Promise<T[]> {
   const res = await fetch(`${BASE}:runQuery`, {
     method: 'POST',
@@ -104,6 +111,7 @@ export async function queryTop<T>(
     body: JSON.stringify({
       structuredQuery: {
         from: [{ collectionId: collection }],
+        ...(fields ? { select: { fields: fields.map((f) => ({ fieldPath: f })) } } : {}),
         orderBy: [{ field: { fieldPath: orderByField }, direction: 'DESCENDING' }],
         limit,
       },

@@ -8,6 +8,9 @@ import { getPassage, units } from './curriculum';
 import { PICTURES } from './pictures';
 import { untranslatedIds } from './i18n';
 import { levelFromXp, scoreAnswer, xpForLevel, nextDifficulty } from '../services/progressService';
+import { buildRows } from '../services/leaderboardService';
+import { blankStudent, guestStudent } from '../services/studentService';
+import type { RosterEntry } from '../services/storage';
 
 export function validateCurriculum(): string[] {
   const problems: string[] = [];
@@ -111,11 +114,43 @@ export function checkScoring(): string[] {
   return problems;
 }
 
+/*
+ * The board has two rules that are easy to break by accident and impossible to
+ * notice in testing: a student must appear exactly once even though she is in
+ * the roster AND passed in live, and a visitor must never appear at all.
+ */
+export function checkBoard(): string[] {
+  const problems: string[] = [];
+  const is = (label: string, actual: unknown, expected: unknown) => {
+    if (actual !== expected) problems.push(`${label}: got ${actual}, expected ${expected}`);
+  };
+
+  const roster: RosterEntry[] = [
+    { id: 'a', name: 'Aisha', avatar: 'A', xp: 900, weeklyXp: 100 },
+    { id: 'b', name: 'Basma', avatar: 'B', xp: 400, weeklyXp: 400 },
+  ];
+
+  const me = { ...blankStudent('Basma', 'b'), xp: 1200 };
+  const mine = buildRows(roster, me);
+  is('every player is listed once', mine.length, 2);
+  is('the live record wins over the snapshot', mine[0].xp, 1200);
+  is('the top row is the leader', mine[0].id, 'b');
+  is('her own row is marked', mine.filter((r) => r.isMe).length, 1);
+
+  const seen = buildRows(roster, guestStudent());
+  is('a visitor is not ranked', seen.length, 2);
+  is('a visitor is nobody on the board', seen.some((r) => r.isMe), false);
+  is('a visitor changes nothing', seen[0].id, 'a');
+
+  return problems;
+}
+
 export function runSelfCheck() {
   const missing = untranslatedIds();
   const problems = [
     ...validateCurriculum(),
     ...checkScoring(),
+    ...checkBoard(),
     ...missing.map((id) => `${id}: no Arabic hints/explanation`),
   ];
   if (problems.length) {

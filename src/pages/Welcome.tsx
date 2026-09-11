@@ -8,6 +8,7 @@ import { Icon } from '../components/Icon';
 
 /** Firebase's error codes, said in a way a student can act on. */
 function messageFor(code: string, mode: 'login' | 'register'): string {
+  if (code === 'BAD_CLASS_CODE') return ar.auth.badCode;
   if (code === 'EMAIL_EXISTS') return ar.auth.nameTaken;
   if (code === 'INVALID_LOGIN_CREDENTIALS' || code === 'INVALID_PASSWORD') return ar.auth.wrongPin;
   if (code === 'EMAIL_NOT_FOUND') return ar.auth.noAccount;
@@ -17,26 +18,43 @@ function messageFor(code: string, mode: 'login' | 'register'): string {
 }
 
 export function Welcome() {
-  const { register, login } = useStudent();
+  const { register, login, enterAsGuest } = useStudent();
   const [mode, setMode] = useState<'login' | 'register'>('login');
   const [name, setName] = useState('');
   const [pin, setPin] = useState('');
+  const [classCode, setClassCode] = useState('');
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState('');
   const navigate = useNavigate();
 
-  const ready = name.trim().length > 0 && /^\d{4,8}$/.test(pin) && !busy;
+  const ready =
+    name.trim().length > 0 &&
+    /^\d{4,8}$/.test(pin) &&
+    (mode === 'login' || classCode.trim().length > 0) &&
+    !busy;
 
   const submit = async () => {
     if (!ready) return;
     setBusy(true);
     setError('');
     try {
-      if (mode === 'register') await register(name, pin);
+      if (mode === 'register') await register(name, pin, classCode);
       else await login(name, pin);
       navigate('/home', { replace: true });
     } catch (e) {
       setError(messageFor((e as Error).message, mode));
+      setBusy(false);
+    }
+  };
+
+  const visit = async () => {
+    setBusy(true);
+    setError('');
+    try {
+      await enterAsGuest();
+      navigate('/home', { replace: true });
+    } catch {
+      setError(ar.auth.loginFailed);
       setBusy(false);
     }
   };
@@ -102,6 +120,21 @@ export function Welcome() {
             />
           </label>
 
+          {mode === 'register' && (
+            <label className="stack" style={{ gap: 6 }}>
+              <span className="tiny muted">{ar.auth.classCodeLabel}</span>
+              <input
+                className="field en-ui"
+                value={classCode}
+                maxLength={16}
+                autoCapitalize="characters"
+                placeholder={ar.auth.classCodePlaceholder}
+                onChange={(e) => setClassCode(e.target.value)}
+                onKeyDown={(e) => e.key === 'Enter' && void submit()}
+              />
+            </label>
+          )}
+
           {error && (
             <p className="small ar" style={{ margin: 0, color: 'var(--red)', fontWeight: 600 }}>
               {error}
@@ -116,6 +149,17 @@ export function Welcome() {
           <p className="tiny dim center ar" style={{ margin: 0 }}>
             {mode === 'register' ? ar.auth.registerHint : ar.auth.loginHint}
           </p>
+        </div>
+
+        {/* The way in for anyone who only wants to look: the head teacher, a
+            parent. No account, no record, and never on the leaderboard. */}
+        <div className="stack" style={{ gap: 6 }}>
+          <div className="divider" />
+          <button className="btn btn-block" disabled={busy} onClick={() => void visit()}>
+            <Icon name="user" size={17} />
+            {ar.auth.visitAction}
+          </button>
+          <p className="tiny dim center ar" style={{ margin: 0 }}>{ar.auth.visitNote}</p>
         </div>
 
         <div className="row wrap center" style={{ justifyContent: 'center', gap: 8 }}>

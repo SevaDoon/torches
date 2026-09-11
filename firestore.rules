@@ -31,14 +31,32 @@ service cloud.firestore {
       function validStudent() {
         return request.resource.data.id == uid
           && request.resource.data.name is string
+          && request.resource.data.name.size() > 0
           && request.resource.data.name.size() <= 100
           && request.resource.data.xp is number
           && request.resource.data.xp >= 0;
       }
 
-      allow create, update: if request.auth != null
+      // Every answer saves as it happens, so an honest write moves the score by
+      // tens of points. The ceiling is set far above that on purpose: a student
+      // whose connection drops mid-mission saves everything at once when it
+      // comes back, and refusing that write would cost her real work. What it
+      // does stop is the one-request fake score — becoming first place forever
+      // now takes hundreds of sequential writes instead of a single one.
+      function honestGain() {
+        return request.resource.data.xp <= resource.data.xp + 10000;
+      }
+
+      // A new account starts at zero. Nobody arrives with a score.
+      allow create: if request.auth != null
         && (request.auth.uid == uid || isTeacher())
-        && validStudent();
+        && validStudent()
+        && (isTeacher() || request.resource.data.xp == 0);
+
+      allow update: if request.auth != null
+        && (request.auth.uid == uid || isTeacher())
+        && validStudent()
+        && (isTeacher() || honestGain());
 
       // Only a teacher can clear a student's record.
       allow delete: if isTeacher();

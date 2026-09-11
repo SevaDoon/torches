@@ -8,11 +8,36 @@ import { Icon } from '../components/Icon';
 import { ar } from '../i18n/ar';
 
 export function Profile() {
-  const { student, update, toast, leave, isTeacher } = useStudentRequired();
+  const { student, update, toast, leave, isTeacher, guest } = useStudentRequired();
   const navigate = useNavigate();
   const [editing, setEditing] = useState(false);
   const [draft, setDraft] = useState(student.name);
   const lvl = levelProgress(student.xp);
+
+  const exit = () => {
+    void leave().then(() => navigate('/welcome', { replace: true }));
+  };
+
+  /*
+   * A visitor has no account to show. Every control on this page edits
+   * something that is never saved, so showing them would be a small lie.
+   */
+  if (guest) {
+    return (
+      <div className="page stack-lg ar-page">
+        <div className="page-head">
+          <h1>{ar.guest.title}</h1>
+          <Icon name="user" size={30} />
+        </div>
+        <div className="card card-lg">
+          <p className="small" style={{ margin: 0 }}>{ar.guest.note}</p>
+        </div>
+        <button className="btn btn-primary btn-block" onClick={exit}>
+          {ar.guest.exit}
+        </button>
+      </div>
+    );
+  }
 
   const save = () => {
     update((s) => rename(s, draft));
@@ -140,12 +165,7 @@ export function Profile() {
         </button>
       </section>
 
-      <button
-        className="btn btn-block"
-        onClick={() => {
-          void leave().then(() => navigate('/welcome', { replace: true }));
-        }}
-      >
+      <button className="btn btn-block" onClick={exit}>
         {ar.profile.switch}
       </button>
       <p className="tiny dim center" style={{ marginTop: -10 }}>{ar.profile.switchNote}</p>
