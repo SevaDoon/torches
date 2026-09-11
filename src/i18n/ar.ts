@@ -250,9 +250,6 @@ export const ar = {
     denied: 'هذه الصفحة للمعلّمة فقط',
     deniedNote: 'حسابك لا يملك صلاحية إدارة الصف.',
     backHome: 'العودة للرئيسية',
-    classCode: 'رمز الانضمام للصف',
-    classCodeNote:
-      'تحتاجه الطالبة مرة واحدة عند إنشاء حسابها. أعطيه لطالباتك فقط — هو ما يمنع الحسابات التجريبية من الدخول للمنافسة.',
   },
 
   lesson: {
@@ -274,9 +271,6 @@ export const ar = {
     loginAction: 'Sign in',
     registerAction: 'Create account',
     working: 'One moment…',
-    classCodeLabel: 'Class code',
-    classCodePlaceholder: 'من معلّمتك',
-    badCode: 'رمز الصف غير صحيح. اطلبيه من معلّمتك.',
     visitAction: 'Visit as a guest',
     visitNote: 'للاطّلاع على الموقع ولوحة الترتيب دون حساب — لا يُحفظ تقدّم ولا يظهر الزائر في المنافسة.',
     loginHint: 'ادخلي بنفس الاسم والرمز من أي جهاز ويرجع لك تقدّمك كاملاً.',

@@ -14,7 +14,6 @@ import {
   type ClassRow,
 } from '../services/teacherService';
 import { levelFromXp } from '../services/progressService';
-import { CLASS_CODE } from '../services/studentService';
 import { SKILL_ORDER } from '../data/curriculum';
 import { skillEn, skillColor } from '../i18n/labels';
 import { Bar } from '../components/Bar';
@@ -224,20 +223,6 @@ export function Teacher() {
           </section>
         </>
       )}
-
-      {/* The code a student needs once, to create her account. */}
-      <section className="card">
-        <div className="eyebrow">{ar.teacher.classCode}</div>
-        <div style={{ marginTop: 8 }}>
-          <code
-            className="en-ui"
-            style={{ fontSize: '1.3rem', fontWeight: 700, letterSpacing: '0.08em' }}
-          >
-            {CLASS_CODE}
-          </code>
-        </div>
-        <p className="tiny dim" style={{ margin: '10px 0 0' }}>{ar.teacher.classCodeNote}</p>
-      </section>
 
       <div className="row wrap" style={{ gap: 8 }}>
         <button className="btn btn-sm" onClick={refresh}>

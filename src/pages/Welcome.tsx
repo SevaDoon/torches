@@ -9,7 +9,6 @@ import { Icon } from '../components/Icon';
 
 /** Firebase's error codes, said in a way a student can act on. */
 function messageFor(code: string, mode: 'login' | 'register'): string {
-  if (code === 'BAD_CLASS_CODE') return ar.auth.badCode;
   if (code === 'EMAIL_EXISTS') return ar.auth.nameTaken;
   if (code === 'INVALID_LOGIN_CREDENTIALS' || code === 'INVALID_PASSWORD') return ar.auth.wrongPin;
   if (code === 'EMAIL_NOT_FOUND') return ar.auth.noAccount;
@@ -23,23 +22,18 @@ export function Welcome() {
   const [mode, setMode] = useState<'login' | 'register'>('login');
   const [name, setName] = useState('');
   const [pin, setPin] = useState('');
-  const [classCode, setClassCode] = useState('');
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState('');
   const navigate = useNavigate();
 
-  const ready =
-    name.trim().length > 0 &&
-    /^\d{4,8}$/.test(pin) &&
-    (mode === 'login' || classCode.trim().length > 0) &&
-    !busy;
+  const ready = name.trim().length > 0 && /^\d{4,8}$/.test(pin) && !busy;
 
   const submit = async () => {
     if (!ready) return;
     setBusy(true);
     setError('');
     try {
-      if (mode === 'register') await register(name, pin, classCode);
+      if (mode === 'register') await register(name, pin);
       else await login(name, pin);
       navigate('/home', { replace: true });
     } catch (e) {
@@ -120,21 +114,6 @@ export function Welcome() {
               onKeyDown={(e) => e.key === 'Enter' && void submit()}
             />
           </label>
-
-          {mode === 'register' && (
-            <label className="stack" style={{ gap: 6 }}>
-              <span className="tiny muted">{ar.auth.classCodeLabel}</span>
-              <input
-                className="field en-ui"
-                value={classCode}
-                maxLength={16}
-                autoCapitalize="characters"
-                placeholder={ar.auth.classCodePlaceholder}
-                onChange={(e) => setClassCode(e.target.value)}
-                onKeyDown={(e) => e.key === 'Enter' && void submit()}
-              />
-            </label>
-          )}
 
           {error && (
             <p className="small ar" style={{ margin: 0, color: 'var(--red)', fontWeight: 600 }}>

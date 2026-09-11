@@ -7,18 +7,6 @@ import { setAuthToken } from './firestoreRest';
 
 const ID_ALPHABET = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789'; // no I, O, 0, 1 — easier to read aloud
 
-/*
- * The class code. A student needs it once, to create her account: the teacher
- * reads it out in class, so the leaderboard stays the real class and not
- * whoever happens to find the link.
- *
- * ponytail: checked in the browser, so it stops casual and accidental signups,
- * not a determined one. Enforcing it in the Firestore rules would mean storing
- * the code inside every student record - worth doing only if someone actually
- * bothers to bypass this.
- */
-export const CLASS_CODE = 'TORCH25';
-
 /** The visitor's record: in memory only, never saved, never ranked. */
 export const GUEST_ID = 'guest';
 
@@ -106,12 +94,7 @@ export async function loadCurrentStudent(): Promise<Student | null> {
 }
 
 /** First time: creates the account. Throws AuthError('EMAIL_EXISTS') if taken. */
-export async function registerStudent(
-  name: string,
-  pin: string,
-  classCode: string,
-): Promise<Student> {
-  if (classCode.trim().toUpperCase() !== CLASS_CODE) throw new Error('BAD_CLASS_CODE');
+export async function registerStudent(name: string, pin: string): Promise<Student> {
   const session = await auth.signUp(name, pin);
   setAuthToken(session.idToken);
   const student = blankStudent(name, session.uid);

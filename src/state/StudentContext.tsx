@@ -37,8 +37,8 @@ interface Ctx {
   isTeacher: boolean;
   /** True while looking around as a visitor: nothing is saved, nothing is ranked. */
   guest: boolean;
-  /** Create a new account with a name, a PIN and the class code. */
-  register: (name: string, pin: string, classCode: string) => Promise<void>;
+  /** Create a new account with a name and a PIN. */
+  register: (name: string, pin: string) => Promise<void>;
   /** Sign back in on any device with the same name and PIN. */
   login: (name: string, pin: string) => Promise<void>;
   /** Look around without an account: she may try anything, nothing is kept. */
@@ -92,8 +92,8 @@ export function StudentProvider({ children }: { children: ReactNode }) {
   }, []);
 
   const register = useCallback(
-    async (name: string, pin: string, classCode: string) => {
-      const s = await registerStudent(name, pin, classCode);
+    async (name: string, pin: string) => {
+      const s = await registerStudent(name, pin);
       setStudent(s);
       setSoundEnabled(s.soundOn);
       toast('🔥', ar.toasts.welcome(s.name));
