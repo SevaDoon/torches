@@ -123,6 +123,11 @@ export const ar = {
     locked: 'Finish the previous unit to unlock this one',
     lockedMission: 'Finish more skill challenges first',
     pages: (pages: string, n: number) => `Book pages ${pages} · ${n} challenges`,
+    stage: (n: number) => `Stage ${n}`,
+    stagesDone: (done: number, total: number) => `${done}/${total} stages`,
+    questionCount: (n: number) => `${n} questions`,
+    start: 'Start',
+    passed: 'Passed',
   },
 
   play: {
@@ -169,6 +174,7 @@ export const ar = {
       `${done} / ${total} pairs · ${tries} tries`,
     trayHint: 'Tap the words below in the right order…',
     shouldBe: 'It should be:',
+    theAnswer: 'الإجابة الصحيحة',
     tapWrong: 'Tap the wrong word',
     listen: 'اضغطي على السمّاعة لتسمعي السؤال كاملاً.',
     listenWords: 'واضغطي على أي كلمة لتسمعي نطقها وحدها.',
@@ -328,6 +334,8 @@ export const ar = {
     soundNote: 'Short blips for correct answers and level-ups',
     on: 'On',
     off: 'Off',
+    photoCredits: 'Photo credits',
+    photoCreditsNote: 'صور الألعاب من ويكيميديا كومنز، وهذه مصادرها ورخصها.',
     switch: 'Sign out',
     switchNote: 'Sign back in any time with the same name and PIN.',
   },

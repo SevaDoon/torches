@@ -1,5 +1,5 @@
 /*
- * Picture questions, kept in one file so the drawings and the words that name
+ * Picture questions, kept in one file so the photos and the words that name
  * them stay together. curriculum/index.ts appends them to their units.
  *
  * Every word here is concrete vocabulary from that unit of the Student Book —

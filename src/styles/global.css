@@ -570,15 +570,21 @@ input { font: inherit; }
   box-shadow: var(--shadow-sm);
 }
 
+/* Two per row on a phone so each photograph is big enough to read at a
+   glance, four once there is room for them. */
 .picmatch-grid {
   display: grid;
-  grid-template-columns: repeat(4, 1fr);
+  grid-template-columns: repeat(2, 1fr);
   gap: 8px;
+}
+@media (min-width: 560px) {
+  .picmatch-grid { grid-template-columns: repeat(4, 1fr); }
 }
 .pic-cell {
   display: grid;
   place-items: center;
   aspect-ratio: 1 / 1;
+  max-height: 150px;
   padding: 4px;
   border-radius: 10px;
   background: var(--paper-2);
@@ -587,6 +593,21 @@ input { font: inherit; }
   transition: transform 0.1s, box-shadow 0.1s, background 0.16s, opacity 0.24s;
 }
 .pic-cell.sel { background: var(--amber); }
+/* Photographs, not drawings: let each one fill its card and keep its own
+   shape inside it, so a tall bottle and a wide street sign both read clearly. */
+.picture {
+  object-fit: contain;
+  border-radius: 8px;
+  background: var(--paper-2);
+}
+.pic-cell .picture {
+  width: 100%;
+  height: 100%;
+}
+.picture-stage .picture {
+  width: min(100%, 260px);
+  height: 190px;
+}
 .pic-cell.done { opacity: 0.34; box-shadow: none; background: var(--green); pointer-events: none; }
 .pic-cell:active { transform: translate(2px, 2px); box-shadow: none; }
 
@@ -820,6 +841,8 @@ input { font: inherit; }
   border: 1.5px solid var(--ink);
 }
 .mission.boss .mission-icon { background: var(--amber); }
+/* A stage she has already passed: still open to replay, visibly behind her. */
+.mission.passed .mission-icon { background: var(--green); color: var(--paper-2); }
 
 /* ---------- leaderboard ---------- */
 
@@ -987,4 +1010,13 @@ input { font: inherit; }
   font-size: 0.78rem;
   font-weight: 600;
   text-align: center;
+}
+
+/* The answer, given after a second mistake — the one moment the app tells her
+   outright. Green like a correct answer, because that is what it is. */
+.answer-card {
+  padding: 10px 13px;
+  border-radius: 10px;
+  background: var(--paper-3);
+  border: 2px solid var(--green);
 }

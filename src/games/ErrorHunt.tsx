@@ -5,7 +5,7 @@ import { sfx } from '../utils/sound';
 import { ar } from '../i18n/ar';
 
 /** One word in the sentence is wrong. Tap it. */
-export function ErrorHunt({ question, locked, onAnswer }: GameProps<ErrorQuestion>) {
+export function ErrorHunt({ question, locked, reveal, onAnswer }: GameProps<ErrorQuestion>) {
   const [picked, setPicked] = useState<number | null>(null);
 
   useEffect(() => {
@@ -24,7 +24,7 @@ export function ErrorHunt({ question, locked, onAnswer }: GameProps<ErrorQuestio
       <div className="tokens">
         {question.tokens.map((t, i) => {
           const cls =
-            locked && i === question.answer
+            reveal && i === question.answer
               ? 'token right'
               : picked === i
                 ? 'token wrong'
@@ -36,7 +36,7 @@ export function ErrorHunt({ question, locked, onAnswer }: GameProps<ErrorQuestio
           );
         })}
       </div>
-      {locked && (
+      {reveal && (
         <p className="small muted" style={{ margin: 0 }}>
           {ar.play.shouldBe}{' '}
           <strong className="en-ui" style={{ color: 'var(--green)' }}>{question.correction}</strong>

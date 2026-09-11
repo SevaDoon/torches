@@ -1,7 +1,12 @@
 /* Which challenges exist, and which questions each one draws from. */
 import type { Difficulty, MissionSpec, Question, Skill, Student } from '../types';
-import { SKILL_ORDER, getQuestion, getUnit, questionsFor } from '../data/curriculum';
-import { unitProgress } from '../services/progressService';
+import { SKILL_ORDER, getQuestion, getUnit, questionsFor, units } from '../data/curriculum';
+import {
+  currentUnitId,
+  missionPassed,
+  unitProgress,
+  unitUnlocked,
+} from '../services/progressService';
 import { shuffle } from '../utils/random';
 
 export function missionsFor(unitId: string): MissionSpec[] {
@@ -42,6 +47,8 @@ export interface MissionPlan {
   pool: Question[];
   /** Which skill each slot of the mission uses. */
   plan: Skill[];
+  /** question id -> 0 she got it wrong, 1 she has not mastered it, 2 she has. */
+  rank: Record<string, number>;
 }
 
 /**
@@ -57,7 +64,11 @@ function priority(q: Question, student: Student): number {
 export function buildPlan(spec: MissionSpec, student: Student): MissionPlan {
   if (spec.kind === 'review') {
     const missed = shuffle(student.mistakes.map(getQuestion).filter((q): q is Question => !!q));
-    return { pool: missed, plan: missed.slice(0, spec.length).map((q) => q.skill) };
+    return {
+      pool: missed,
+      plan: missed.slice(0, spec.length).map((q) => q.skill),
+      rank: Object.fromEntries(missed.map((q) => [q.id, 0])),
+    };
   }
 
   const pool = shuffle(spec.skills.flatMap((s) => questionsFor(spec.unitId, s))).sort(
@@ -83,10 +94,17 @@ export function buildPlan(spec: MissionSpec, student: Student): MissionPlan {
     plan = Array.from({ length: spec.length }, (_, i) => rotation[i % Math.max(1, rotation.length)]);
   }
 
-  return { pool, plan };
+  return { pool, plan, rank: Object.fromEntries(pool.map((q) => [q.id, priority(q, student)])) };
 }
 
-/** Closest question to the target difficulty in the wanted skill. */
+/**
+ * The next question: the one she most needs, at the difficulty she is ready for.
+ *
+ * Need comes first and difficulty only breaks the tie inside it. Sorting the
+ * pool by need was not enough on its own — scanning the whole pool for the
+ * closest difficulty quietly ignored that order, which is how a challenge she
+ * replayed kept serving the same questions she had already got right.
+ */
 export function pickQuestion(
   plan: MissionPlan,
   used: Set<string>,
@@ -98,9 +116,50 @@ export function pickQuestion(
   if (candidates.length === 0) return undefined;
   const inSkill = candidates.filter((q) => q.skill === wanted);
   const search = inSkill.length ? inSkill : candidates;
-  return search.reduce((best, q) =>
+
+  const rankOf = (q: Question) => plan.rank[q.id] ?? 1;
+  const mostNeeded = Math.min(...search.map(rankOf));
+  const tier = search.filter((q) => rankOf(q) === mostNeeded);
+
+  return tier.reduce((best, q) =>
     Math.abs(q.difficulty - target) < Math.abs(best.difficulty - target) ? q : best,
   );
+}
+
+/**
+ * How far through a unit she is, counted in the stages the journey actually
+ * lists. `unitCompletion` answers a different question — whether she has done
+ * enough to unlock what comes next — and it is deliberately left alone: it
+ * decides what is open to her, and moving that bar would close units that are
+ * already open.
+ */
+export function unitStages(student: Student, unitId: string): { done: number; total: number } {
+  const all = missionsFor(unitId);
+  return { done: all.filter((m) => missionPassed(student, unitId, m)).length, total: all.length };
+}
+
+/**
+ * What the Continue button should open: the first challenge she has not passed
+ * yet, searched forward from the unit she is working in. Without this the
+ * button fell back to the first challenge of the unit — one she had already
+ * finished — as soon as there was nothing left unpassed in it.
+ */
+export function nextMissionFor(student: Student): { unitId: string; mission: MissionSpec } {
+  const from = Math.max(0, units.findIndex((u) => u.id === currentUnitId(student)));
+
+  for (let i = from; i < units.length; i++) {
+    if (!unitUnlocked(student, i)) break;
+    const unitId = units[i].id;
+    const open = missionsFor(unitId).find(
+      (m) => missionUnlocked(student, m) && !missionPassed(student, unitId, m),
+    );
+    if (open) return { unitId, mission: open };
+  }
+
+  // Everything open to her is passed: the boss of the unit she is in, to replay.
+  const unitId = currentUnitId(student);
+  const all = missionsFor(unitId);
+  return { unitId, mission: all[all.length - 1] ?? all[0] };
 }
 
 export function reviewMission(student: Student): MissionSpec {

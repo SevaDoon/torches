@@ -309,7 +309,7 @@ export function Play() {
         </div>
 
         {/* Word Hunt draws the sentence itself, and the picture games say
-            everything in the drawing — so those get the short instruction only,
+            everything in the photo — so those get the short instruction only,
             never the sentence twice. */}
         {q.type === 'blank' || q.type === 'picture' || q.type === 'picmatch' ? (
           <p className="small muted" style={{ marginBottom: 12 }}>{instruction}</p>
@@ -333,6 +333,7 @@ export function Play() {
           question={q}
           hintLevel={session.hintLevel}
           locked={session.status !== 'question'}
+          reveal={!!session.feedback && !session.feedback.retry}
           onAnswer={session.answer}
         />
 
@@ -381,6 +382,17 @@ export function Play() {
                 <span className="chip chip-hot num">+{session.feedback.xp}</span>
               )}
             </div>
+
+            {/* Wrong twice: she has earned the answer itself, not just the
+                reason. Leaving the round without knowing it teaches nothing. */}
+            {session.feedback.answer && (
+              <div className="answer-card">
+                <div className="eyebrow ar">{ar.play.theAnswer}</div>
+                <p className="en" style={{ margin: '5px 0 0', fontSize: '1.08rem' }}>
+                  <Words text={session.feedback.answer} />
+                </p>
+              </div>
+            )}
 
             <p className="small" style={{ margin: 0 }}>
               <strong className="muted">

@@ -8,6 +8,7 @@ import type { Difficulty, MissionSpec, MiniLesson, Question, Skill, Student } fr
 import { buildPlan, pickQuestion, xpMultiplier } from './missions';
 import { nextDifficulty, scoreAnswer } from '../services/progressService';
 import type { AnswerRecord } from '../services/studentService';
+import { answerTextOf } from '../games';
 import { lessonFor } from '../data/curriculum';
 import { explanationOf, hintsOf, localizeLesson } from '../data/i18n';
 import { ar } from '../i18n/ar';
@@ -22,6 +23,8 @@ export interface Feedback {
   xp: number;
   breakdown: Array<{ label: string; xp: number }>;
   message: string;
+  /** The right answer, spelled out. Only once the question is over. */
+  answer?: string;
 }
 
 export interface SessionSummary {
@@ -33,6 +36,20 @@ export interface SessionSummary {
 }
 
 const RESCUE_THRESHOLD = 3;
+
+/*
+ * Where a second try is a real second chance. The pairing games end only when
+ * every pair has been found, so by then the board has already shown her the
+ * answer — replaying one would be memory, not a second think.
+ */
+const RETRYABLE: ReadonlyArray<Question['type']> = [
+  'mcq',
+  'truefalse',
+  'blank',
+  'error',
+  'order',
+  'picture',
+];
 
 /** Hint ladder. The last rung explains the concept — it never states the answer. */
 export const HINT_KEYS = ['think', 'remember', 'example', 'eliminate', 'explain'] as const;
@@ -143,6 +160,7 @@ export function useSession(
           streak: combo,
           hintsUsed: hintLevel,
           multiplier,
+          attempt,
         });
         const nextCombo = combo + 1;
         stats.current.answered += 1;
@@ -179,7 +197,7 @@ export function useSession(
       setCombo(0);
 
       // First mistake: a nudge, not the answer, and one more try.
-      if (attempt === 0) {
+      if (attempt === 0 && RETRYABLE.includes(question.type)) {
         setAttempt(1);
         setFeedback({
           correct: false,
@@ -213,8 +231,10 @@ export function useSession(
         retry: false,
         xp: 0,
         breakdown: [],
-        // She just got it wrong twice — this is the moment Arabic matters most.
+        // She just got it wrong twice — this is the moment Arabic matters most,
+        // and the moment she has earned the answer itself.
         message: explanationOf(question),
+        answer: answerTextOf(question),
       });
       setStatus('feedback');
     },

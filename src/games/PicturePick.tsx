@@ -7,8 +7,14 @@ import { sfx } from '../utils/sound';
 
 const KEYS = ['A', 'B', 'C', 'D'];
 
-/** See the drawing, pick the English word for it. */
-export function PicturePick({ question, hintLevel, locked, onAnswer }: GameProps<PictureQuestion>) {
+/** See the photograph, pick the English word for it. */
+export function PicturePick({
+  question,
+  hintLevel,
+  locked,
+  reveal,
+  onAnswer,
+}: GameProps<PictureQuestion>) {
   const [picked, setPicked] = useState<string | null>(null);
 
   const options = useMemo(() => seededShuffle(question.options, question.id), [question]);
@@ -46,7 +52,7 @@ export function PicturePick({ question, hintLevel, locked, onAnswer }: GameProps
             'option',
             isPicked && locked ? (o === correct ? 'right' : 'wrong') : '',
             isPicked && !locked ? 'picked' : '',
-            locked && !isPicked && o === correct ? 'right' : '',
+            reveal && !isPicked && o === correct ? 'right' : '',
             dim ? 'out' : '',
           ]
             .filter(Boolean)

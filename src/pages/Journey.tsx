@@ -2,13 +2,8 @@
 import { useNavigate } from 'react-router-dom';
 import { useStudentRequired } from '../state/StudentContext';
 import { units } from '../data/curriculum';
-import {
-  MISSION_PASS,
-  currentUnitId,
-  unitCompletion,
-  unitUnlocked,
-} from '../services/progressService';
-import { missionUnlocked, missionsFor } from '../engine/missions';
+import { currentUnitId, missionPassed, unitUnlocked } from '../services/progressService';
+import { missionUnlocked, missionsFor, unitStages } from '../engine/missions';
 import { Bar } from '../components/Bar';
 import { Icon, missionIcon } from '../components/Icon';
 import { ar } from '../i18n/ar';
@@ -18,7 +13,12 @@ export function Journey() {
   const { student } = useStudentRequired();
   const navigate = useNavigate();
   const [open, setOpen] = useState<string | null>(currentUnitId(student));
-  const done = units.filter((u) => unitCompletion(student, u.id) >= 1).length;
+  // A unit is finished when every stage in it is: the same rule the rows use.
+  const isDone = (unitId: string) => {
+    const s = unitStages(student, unitId);
+    return s.done === s.total;
+  };
+  const done = units.filter((u) => isDone(u.id)).length;
 
   return (
     <div className="page stack-lg">
@@ -33,9 +33,9 @@ export function Journey() {
       <div className="journey">
         {units.map((unit, i) => {
           const unlocked = unitUnlocked(student, i);
-          const completion = unitCompletion(student, unit.id);
+          const stages = unitStages(student, unit.id);
           const isOpen = open === unit.id;
-          const cleared = completion >= 1;
+          const cleared = stages.done === stages.total;
 
           return (
             <div key={unit.id} className="stack" style={{ gap: 8 }}>
@@ -60,7 +60,11 @@ export function Journey() {
                     <h3 style={{ whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
                       {unit.title}
                     </h3>
-                    <span className="tiny dim num">{Math.round(completion * 100)}%</span>
+                    {unlocked && (
+                      <span className="tiny dim" style={{ whiteSpace: 'nowrap' }}>
+                        {ar.journey.stagesDone(stages.done, stages.total)}
+                      </span>
+                    )}
                   </div>
                   {unlocked && (
                     <p className="tiny dim" style={{ margin: '1px 0 7px' }}>
@@ -72,19 +76,31 @@ export function Journey() {
                       {ar.journey.locked}
                     </p>
                   )}
-                  <Bar percent={completion * 100} thin />
+                  {/* The bar counts the same stages the row does. */}
+                  <Bar percent={(stages.done / stages.total) * 100} thin />
                 </div>
               </button>
 
               {isOpen && unlocked && (
                 <div className="stack" style={{ gap: 8, paddingInlineStart: 10 }}>
-                  {missionsFor(unit.id).map((m) => {
+                  {missionsFor(unit.id).map((m, stage) => {
                     const score = student.units[unit.id]?.missions[m.key] ?? 0;
                     const ok = missionUnlocked(student, m);
+                    const passed = missionPassed(student, unit.id, m);
+                    /*
+                     * Inside an opened unit the old subtitle repeated the unit
+                     * she is already looking at; the stage number is what she
+                     * cannot see anywhere else.
+                     */
+                    const sub = !ok
+                      ? ar.journey.lockedMission
+                      : m.kind === 'skill'
+                        ? ar.journey.questionCount(m.length)
+                        : missionSubtitle(m);
                     return (
                       <button
                         key={m.key}
-                        className={`mission${m.kind === 'boss' ? ' boss' : ''}`}
+                        className={`mission${m.kind === 'boss' ? ' boss' : ''}${passed ? ' passed' : ''}`}
                         disabled={!ok}
                         onClick={() => navigate(`/play/${unit.id}/${m.key}`)}
                       >
@@ -93,21 +109,21 @@ export function Journey() {
                         </span>
                         <span style={{ minWidth: 0 }}>
                           <span style={{ fontWeight: 600, display: 'block' }}>
-                            {missionTitle(m)}
+                            {ar.journey.stage(stage + 1)} · {missionTitle(m)}
                           </span>
-                          <span className="tiny dim">
-                            {ok ? missionSubtitle(m) : ar.journey.lockedMission}
-                          </span>
+                          <span className="tiny dim">{sub}</span>
                         </span>
                         <span
                           className={`chip${
-                            score >= MISSION_PASS ? ' chip-good' : score > 0 ? ' chip-hot' : ' chip-quiet'
+                            passed ? ' chip-good' : score > 0 ? ' chip-hot' : ' chip-quiet'
                           }`}
                         >
-                          {score > 0 ? (
+                          {passed ? (
+                            <Icon name="check" size={15} />
+                          ) : score > 0 ? (
                             <span className="num">{Math.round(score * 100)}%</span>
                           ) : (
-                            <span className="num">{m.length}</span>
+                            ar.journey.start
                           )}
                         </span>
                       </button>

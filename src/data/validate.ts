@@ -9,7 +9,8 @@ import { PICTURES } from './pictures';
 import { untranslatedIds } from './i18n';
 import { levelFromXp, scoreAnswer, xpForLevel, nextDifficulty } from '../services/progressService';
 import { buildRows } from '../services/leaderboardService';
-import { speakableOf } from '../games';
+import { answerTextOf, speakableOf } from '../games';
+import { buildPlan, missionsFor, nextMissionFor, pickQuestion } from '../engine/missions';
 import { currentUnitId } from '../services/progressService';
 import { blankStudent, guestStudent } from '../services/studentService';
 import type { RosterEntry } from '../services/storage';
@@ -39,6 +40,10 @@ export function validateCurriculum(): string[] {
       if (q.passageId && !getPassage(q.passageId)) problems.push(`${at}: unknown passage`);
       // Every question must be one the student can ask to hear.
       if (!speakableOf(q).trim()) problems.push(`${at}: nothing for the reader to say`);
+      // Wrong twice has to end with the answer, for every question that has one.
+      if (q.type !== 'match' && q.type !== 'memory' && q.type !== 'picmatch' && !answerTextOf(q).trim()) {
+        problems.push(`${at}: no answer to show after a second mistake`);
+      }
 
       switch (q.type) {
         case 'mcq':
@@ -62,14 +67,14 @@ export function validateCurriculum(): string[] {
           if (!q.accept.length) problems.push(`${at}: no accepted answers`);
           break;
         case 'picture':
-          if (!PICTURES[q.pictureId]) problems.push(`${at}: no drawing "${q.pictureId}"`);
+          if (!PICTURES[q.pictureId]) problems.push(`${at}: no photo "${q.pictureId}"`);
           if (q.answer < 0 || q.answer >= q.options.length) problems.push(`${at}: answer out of range`);
           if (new Set(q.options).size !== q.options.length) problems.push(`${at}: duplicate options`);
           break;
         case 'picmatch':
           if (q.pairs.length < 3) problems.push(`${at}: too few pairs`);
           for (const [pic] of q.pairs) {
-            if (!PICTURES[pic]) problems.push(`${at}: no drawing "${pic}"`);
+            if (!PICTURES[pic]) problems.push(`${at}: no photo "${pic}"`);
           }
           if (new Set(q.pairs.map((p) => p[1])).size !== q.pairs.length) {
             problems.push(`${at}: two pairs share a word — unmatchable`);
@@ -101,7 +106,15 @@ export function checkScoring(): string[] {
   is('levelFromXp(200)', levelFromXp(200), 2);
   is('levelFromXp(899)', levelFromXp(899), 3);
 
-  const base = { correct: true as const, difficulty: 1 as const, seconds: 60, streak: 0, hintsUsed: 0, multiplier: 1 };
+  const base = {
+    correct: true as const,
+    difficulty: 1 as const,
+    seconds: 60,
+    streak: 0,
+    hintsUsed: 0,
+    multiplier: 1,
+    attempt: 0,
+  };
   is('plain correct answer', scoreAnswer(base).xp, 100);
   is('wrong answer earns nothing', scoreAnswer({ ...base, correct: false }).xp, 0);
   is('hard question', scoreAnswer({ ...base, difficulty: 3 }).xp, 150);
@@ -109,6 +122,17 @@ export function checkScoring(): string[] {
   is('boss multiplier', scoreAnswer({ ...base, multiplier: 2.5 }).xp, 250);
   // Hints reduce the reward but never below 40.
   is('hint floor', scoreAnswer({ ...base, hintsUsed: 9 }).xp, 40);
+
+  // Guessing must never pay: every bonus is first-try only.
+  is('second try is worth less', scoreAnswer({ ...base, attempt: 1 }).xp, 40);
+  is('no speed bonus on a second try', scoreAnswer({ ...base, attempt: 1, seconds: 2 }).xp, 40);
+  is('no combo bonus on a second try', scoreAnswer({ ...base, attempt: 1, streak: 9 }).xp, 40);
+  is(
+    'no difficulty bonus on a second try',
+    scoreAnswer({ ...base, attempt: 1, difficulty: 3 }).xp,
+    40,
+  );
+  is('a boss still doubles it', scoreAnswer({ ...base, attempt: 1, multiplier: 2 }).xp, 80);
 
   is('three right moves up', nextDifficulty(1, [true, true, true]), 2);
   is('two wrong moves down', nextDifficulty(3, [false, false]), 2);
@@ -178,6 +202,56 @@ export function checkResume(): string[] {
   return problems;
 }
 
+/*
+ * What she is served next. Both of these were real complaints: a challenge she
+ * replayed handed back the questions she had already got right, and the home
+ * button opened a stage she had already passed.
+ */
+export function checkPicking(): string[] {
+  const problems: string[] = [];
+  const is = (label: string, actual: unknown, expected: unknown) => {
+    if (actual !== expected) problems.push(`${label}: got ${actual}, expected ${expected}`);
+  };
+
+  const unit = units[0];
+  const stages = missionsFor(unit.id);
+  const skill = stages[0].skills[0];
+  const inSkill = unit.questions.filter((q) => q.skill === skill);
+  const spare = inSkill[inSkill.length - 1];
+
+  // She has mastered everything in this skill except one question.
+  const almostDone = {
+    ...blankStudent('Test', 't'),
+    mastered: inSkill.filter((q) => q.id !== spare.id).map((q) => q.id),
+  };
+  const plan = buildPlan(stages[0], almostDone);
+  is(
+    'the question she has not mastered comes first',
+    pickQuestion(plan, new Set(), 0, 1)?.id,
+    spare.id,
+  );
+
+  // A question she got wrong outranks even a fresh one.
+  const withMiss = { ...blankStudent('Test', 't'), mistakes: [spare.id] };
+  is(
+    'a question she missed comes first of all',
+    pickQuestion(buildPlan(stages[0], withMiss), new Set(), 0, 1)?.id,
+    spare.id,
+  );
+
+  const passedFirst = {
+    ...blankStudent('Test', 't'),
+    units: { [unit.id]: { missions: { [stages[0].key]: 1 }, bossCleared: false } },
+  };
+  is(
+    'a stage she passed is not what Continue opens',
+    nextMissionFor(passedFirst).mission.key,
+    stages[1].key,
+  );
+
+  return problems;
+}
+
 export function runSelfCheck() {
   const missing = untranslatedIds();
   const problems = [
@@ -185,6 +259,7 @@ export function runSelfCheck() {
     ...checkScoring(),
     ...checkBoard(),
     ...checkResume(),
+    ...checkPicking(),
     ...missing.map((id) => `${id}: no Arabic hints/explanation`),
   ];
   if (problems.length) {

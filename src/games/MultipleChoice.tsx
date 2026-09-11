@@ -6,7 +6,13 @@ import { sfx } from '../utils/sound';
 
 const KEYS = ['A', 'B', 'C', 'D', 'E'];
 
-export function MultipleChoice({ question, hintLevel, locked, onAnswer }: GameProps<McqQuestion>) {
+export function MultipleChoice({
+  question,
+  hintLevel,
+  locked,
+  reveal,
+  onAnswer,
+}: GameProps<McqQuestion>) {
   const [picked, setPicked] = useState<string | null>(null);
 
   // True/False keeps its natural order; multiple choice is shuffled per question.
@@ -49,7 +55,7 @@ export function MultipleChoice({ question, hintLevel, locked, onAnswer }: GamePr
           'option',
           isPicked && locked ? (o === correct ? 'right' : 'wrong') : '',
           isPicked && !locked ? 'picked' : '',
-          locked && !isPicked && o === correct ? 'right' : '',
+          reveal && !isPicked && o === correct ? 'right' : '',
           dim ? 'out' : '',
         ]
           .filter(Boolean)

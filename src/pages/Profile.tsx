@@ -5,6 +5,7 @@ import { AVATARS, rename } from '../services/studentService';
 import { levelProgress } from '../services/progressService';
 import { Torch, TorchTierName } from '../components/Torch';
 import { Icon } from '../components/Icon';
+import { PHOTO_CREDITS } from '../data/pictureCredits';
 import { ar } from '../i18n/ar';
 
 export function Profile() {
@@ -164,6 +165,27 @@ export function Profile() {
           {student.soundOn ? ar.profile.on : ar.profile.off}
         </button>
       </section>
+
+      {/* The photographs in the picture games are other people's work, and
+          most of their licences ask for the author's name. */}
+      <details className="card">
+        <summary style={{ fontWeight: 600, cursor: 'pointer' }}>{ar.profile.photoCredits}</summary>
+        <p className="tiny dim" style={{ margin: '8px 0 10px' }}>{ar.profile.photoCreditsNote}</p>
+        <div className="stack" style={{ gap: 6 }}>
+          {PHOTO_CREDITS.map((c) => (
+            <a
+              key={c.id}
+              className="tiny en-ui"
+              href={c.page}
+              target="_blank"
+              rel="noreferrer"
+              style={{ color: 'var(--ink-2)' }}
+            >
+              {c.file} — {c.author} ({c.licence})
+            </a>
+          ))}
+        </div>
+      </details>
 
       <button className="btn btn-block" onClick={exit}>
         {ar.profile.switch}

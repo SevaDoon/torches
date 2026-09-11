@@ -96,7 +96,7 @@ export function builder(unitId: string, idPrefix = unitId) {
       return api;
     },
 
-    /** Name the drawing. `pic` is a key from data/pictures.tsx. */
+    /** Name the photo. `pic` is a key from data/pictures.tsx. */
     pic(q: { pic: string; o: string[]; a: number } & Common) {
       out.push({
         ...base(q),
@@ -109,7 +109,7 @@ export function builder(unitId: string, idPrefix = unitId) {
       return api;
     },
 
-    /** Match drawings to words. Each pair is [pictureId, word]. */
+    /** Match photos to words. Each pair is [pictureId, word]. */
     picmat(q: { pairs: Array<[string, string]> } & Common) {
       out.push({
         ...base(q),

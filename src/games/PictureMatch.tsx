@@ -6,7 +6,7 @@ import { seededShuffle } from '../utils/random';
 import { sfx } from '../utils/sound';
 import { ar } from '../i18n/ar';
 
-/** Tap a drawing, then the English word that names it. */
+/** Tap a photograph, then the English word that names it. */
 export function PictureMatch({ question, locked, onAnswer }: GameProps<PicMatchQuestion>) {
   const pics = useMemo(
     () => seededShuffle(question.pairs.map((p, i) => ({ pic: p[0], i })), `${question.id}-p`),

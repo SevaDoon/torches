@@ -6,15 +6,9 @@ import { Bar } from '../components/Bar';
 import { Icon, missionIcon } from '../components/Icon';
 import { SkillMeters } from '../components/SkillMeter';
 import { getUnit, units } from '../data/curriculum';
-import {
-  MISSION_PASS,
-  currentUnitId,
-  levelProgress,
-  unitCompletion,
-  weakestSkill,
-} from '../services/progressService';
+import { levelProgress, weakestSkill } from '../services/progressService';
 import { loadLeaderboard, rankOf } from '../services/leaderboardService';
-import { missionUnlocked, missionsFor } from '../engine/missions';
+import { missionsFor, nextMissionFor, unitStages } from '../engine/missions';
 import { ar } from '../i18n/ar';
 import { missionTitle, skillEn } from '../i18n/labels';
 
@@ -24,17 +18,16 @@ export function Home() {
   const [rank, setRank] = useState<{ place: number; of: number } | null>(null);
 
   const lvl = levelProgress(student.xp);
-  const unitId = currentUnitId(student);
-  const unit = getUnit(unitId)!;
   const weak = weakestSkill(student);
 
+  // One answer to "what should I play now", shared with the journey's rules.
+  const { unitId, mission: next } = nextMissionFor(student);
+  const unit = getUnit(unitId)!;
   const missions = missionsFor(unitId);
-  const progress = student.units[unitId]?.missions ?? {};
-  const next =
-    missions.find((m) => missionUnlocked(student, m) && (progress[m.key] ?? 0) < MISSION_PASS) ??
-    missions[0];
   // Where she is in this unit, counted the way the journey lists it.
   const stage = missions.findIndex((m) => m.key === next.key) + 1;
+  const stages = unitStages(student, unitId);
+  const unitPercent = Math.round((stages.done / stages.total) * 100);
 
   useEffect(() => {
     void loadLeaderboard(student).then((rows) =>
@@ -99,13 +92,9 @@ export function Home() {
           </span>
         </div>
         <div style={{ marginTop: 14 }}>
-          <Bar percent={unitCompletion(student, unitId) * 100} thin />
+          <Bar percent={unitPercent} thin />
           <p className="tiny" style={{ margin: '6px 0 0', opacity: 0.85 }}>
-            {ar.home.stageLine(
-              stage,
-              missions.length,
-              Math.round(unitCompletion(student, unitId) * 100),
-            )}
+            {ar.home.stageLine(stage, missions.length, unitPercent)}
           </p>
         </div>
       </button>

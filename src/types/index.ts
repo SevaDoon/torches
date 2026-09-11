@@ -13,8 +13,8 @@ export type QuestionType =
   | 'memory' // memory cards, built from the same pairs as `match`
   | 'blank' // type the missing word
   | 'error' // tap the wrong word in the sentence
-  | 'picture' // see a drawing, choose the English word
-  | 'picmatch'; // match drawings to their words
+  | 'picture' // see a photo, choose the English word
+  | 'picmatch'; // match photos to their words
 
 export interface BaseQuestion {
   id: string;

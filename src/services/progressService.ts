@@ -1,5 +1,5 @@
 /* Pure progress maths: levels, XP, accuracy, recommendations. No storage, no React. */
-import type { Difficulty, Skill, Student, UnitProgress } from '../types';
+import type { Difficulty, MissionSpec, Skill, Student, UnitProgress } from '../types';
 import { SKILL_ORDER, questionsFor, units } from '../data/curriculum';
 
 /** Cumulative XP needed to reach a level: 0, 200, 500, 900, 1400, 2000 … */
@@ -61,6 +61,18 @@ export function unitProgress(student: Student, unitId: string): UnitProgress {
 /** A mission counts as finished at 80% accuracy — perfection is not the bar. */
 export const MISSION_PASS = 0.8;
 
+/**
+ * One definition of "she has finished this challenge", shared by the journey,
+ * the home card and the Continue button. The boss has its own, lower bar — it
+ * is what unlocks the next unit — and reading it from `bossCleared` keeps the
+ * two thresholds from drifting apart.
+ */
+export function missionPassed(student: Student, unitId: string, mission: MissionSpec): boolean {
+  const p = unitProgress(student, unitId);
+  if (mission.kind === 'boss') return p.bossCleared;
+  return (p.missions[mission.key] ?? 0) >= MISSION_PASS;
+}
+
 export const missionCompletion = (bestAccuracy: number) =>
   Math.min(1, bestAccuracy / MISSION_PASS);
 
@@ -121,11 +133,28 @@ export interface ScoreInput {
   hintsUsed: number;
   /** Boss and mixed challenges are worth more. */
   multiplier: number;
+  /** 0 on the first try, 1 after a mistake on this question. */
+  attempt: number;
 }
 
 export function scoreAnswer(input: ScoreInput) {
   const breakdown: Array<{ label: string; xp: number }> = [];
   if (!input.correct) return { xp: 0, breakdown };
+
+  /*
+   * Right, but only after getting it wrong: worth something, never worth
+   * guessing for. Every bonus below — difficulty, speed, combo — is first-try
+   * only, so a tap-and-see round scores a fraction of a round she thought
+   * through, and the leaderboard stays a ranking of learning.
+   */
+  if (input.attempt > 0) {
+    breakdown.push({ label: 'Right on the second try', xp: 40 });
+    const xp = Math.round(40 * input.multiplier);
+    if (input.multiplier !== 1) {
+      breakdown.push({ label: `Challenge bonus x${input.multiplier}`, xp: xp - 40 });
+    }
+    return { xp, breakdown };
+  }
 
   breakdown.push({ label: 'Correct', xp: 100 });
   if (input.difficulty > 1) {

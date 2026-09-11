@@ -29,6 +29,9 @@ export const GAME_NAMES: Record<Question['type'], string> = ar.games as Record<
   string
 >;
 
+/** Tokens back into a sentence, without a space in front of the punctuation. */
+const sentenceOf = (parts: string[]) => parts.join(' ').replace(/\s+([.,!?;:])/g, '$1');
+
 /**
  * Everything the question says in English, in the order she sees it on screen.
  *
@@ -53,7 +56,7 @@ export function speakableOf(q: Question): string {
       said.push(q.prompt); // the gap is spoken as the word "blank"
       break;
     case 'error':
-      said.push(q.tokens.join(' '));
+      said.push(sentenceOf(q.tokens));
       break;
     case 'order':
       said.push(...seededShuffle(q.chunks, q.id)); // the tray, not the sentence
@@ -74,6 +77,30 @@ export function speakableOf(q: Question): string {
   }
 
   return said.join('. ');
+}
+
+/**
+ * The right answer, in words, for the moment she has earned it — after a second
+ * mistake. The pairing games are left out on purpose: they only finish once
+ * every pair is on the board, so the answer is already in front of her.
+ */
+export function answerTextOf(q: Question): string {
+  switch (q.type) {
+    case 'mcq':
+    case 'truefalse':
+    case 'picture':
+      return q.options[q.answer];
+    case 'blank':
+      return q.accept[0];
+    case 'order':
+      return sentenceOf(q.chunks);
+    case 'error':
+      // The whole sentence put right, not the loose word: the correction only
+      // teaches anything in the sentence it belongs to.
+      return sentenceOf(q.tokens.map((t, i) => (i === q.answer ? q.correction : t)));
+    default:
+      return '';
+  }
 }
 
 export function GameSurface(props: GameProps) {
