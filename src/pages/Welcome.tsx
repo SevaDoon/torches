@@ -4,6 +4,7 @@ import { useStudent } from '../state/StudentContext';
 import { COURSE, units } from '../data/curriculum';
 import { totalQuestionCount } from '../services/progressService';
 import { ar } from '../i18n/ar';
+import { Credits } from '../components/Credits';
 import { Icon } from '../components/Icon';
 
 /** Firebase's error codes, said in a way a student can act on. */
@@ -171,6 +172,8 @@ export function Welcome() {
         <p className="tiny dim center" style={{ margin: 0 }}>
           {ar.courseLine} <span className="en-ui">{COURSE.title}</span> — {ar.welcome.privacy}
         </p>
+
+        <Credits />
       </div>
     </div>
   );

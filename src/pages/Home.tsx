@@ -5,6 +5,7 @@ import { Torch, TorchTierName } from '../components/Torch';
 import { Bar } from '../components/Bar';
 import { Icon, missionIcon } from '../components/Icon';
 import { SkillMeters } from '../components/SkillMeter';
+import { Credits } from '../components/Credits';
 import { getUnit, units } from '../data/curriculum';
 import { levelProgress, weakestSkill } from '../services/progressService';
 import { loadLeaderboard, rankOf } from '../services/leaderboardService';
@@ -152,6 +153,8 @@ export function Home() {
       <p className="tiny dim center" style={{ marginBottom: 0 }}>
         {ar.courseLine} <span className="en-ui">MegaGoal 1 — Student Book</span>
       </p>
+
+      <Credits />
     </div>
   );
 }

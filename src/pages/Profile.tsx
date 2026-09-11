@@ -5,6 +5,7 @@ import { AVATARS, rename } from '../services/studentService';
 import { levelProgress } from '../services/progressService';
 import { Torch, TorchTierName } from '../components/Torch';
 import { Icon } from '../components/Icon';
+import { Credits } from '../components/Credits';
 import { PHOTO_CREDITS } from '../data/pictureCredits';
 import { ar } from '../i18n/ar';
 
@@ -36,6 +37,7 @@ export function Profile() {
         <button className="btn btn-primary btn-block" onClick={exit}>
           {ar.guest.exit}
         </button>
+        <Credits />
       </div>
     );
   }
@@ -191,6 +193,8 @@ export function Profile() {
         {ar.profile.switch}
       </button>
       <p className="tiny dim center" style={{ marginTop: -10 }}>{ar.profile.switchNote}</p>
+
+      <Credits />
     </div>
   );
 }

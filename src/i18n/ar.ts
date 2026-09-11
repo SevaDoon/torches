@@ -385,6 +385,13 @@ export const ar = {
     exit: 'إنهاء وضع الزائر',
   },
 
+  /* Whose app this is — a school and a teacher, named in their own language. */
+  credits: {
+    school: 'ثانوية زينب بنت معاوية',
+    by: 'إعداد وتصميم: المعلّمة مشاعل العنزي',
+    rights: 'جميع الحقوق محفوظة © 2026',
+  },
+
   notFound: "That challenge doesn't exist.",
 } as const;
 
