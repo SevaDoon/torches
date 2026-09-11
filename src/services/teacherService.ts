@@ -41,6 +41,7 @@ function normalize(r: Partial<Student>): Student {
     xp: r.xp ?? 0,
     streak: r.streak ?? 0,
     lastPlayedDay: r.lastPlayedDay ?? '',
+    lastUnitId: r.lastUnitId ?? '',
     bestCombo: r.bestCombo ?? 0,
     soundOn: r.soundOn ?? true,
     skills: { ...blankSkills, ...(r.skills ?? {}) },

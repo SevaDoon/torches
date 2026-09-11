@@ -149,6 +149,8 @@ export interface Student {
   /** Consecutive days played. */
   streak: number;
   lastPlayedDay: string;
+  /** The unit she was last working through — where "Continue" takes her back. */
+  lastUnitId: string;
   bestCombo: number;
   soundOn: boolean;
   skills: Record<Skill, SkillStat>;

@@ -1,7 +1,7 @@
 ﻿import { useCallback, useMemo, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { useStudentRequired } from '../state/StudentContext';
-import { GAME_NAMES, GameSurface } from '../games';
+import { GAME_NAMES, GameSurface, speakableOf } from '../games';
 import {
   HINT_LABELS,
   hintText,
@@ -14,11 +14,11 @@ import { getPassage, getUnit, lessonFor } from '../data/curriculum';
 import { localizeLesson } from '../data/i18n';
 import { applyAnswer, applyMissionResult } from '../services/studentService';
 import { Blocks } from '../components/Bar';
-import { Speak } from '../components/Speak';
+import { Speak, Words } from '../components/Speak';
 import { Icon, missionIcon } from '../components/Icon';
 import { ar } from '../i18n/ar';
 import { missionTitle, skillEn, skillColor } from '../i18n/labels';
-import { useCanSpeak } from '../utils/speech';
+import { speak, useCanSpeak } from '../utils/speech';
 
 export function Play() {
   const { unitId = '', missionKey = '' } = useParams();
@@ -56,7 +56,16 @@ export function Play() {
 
   const commit = useCallback(
     (record: Parameters<typeof applyAnswer>[1]) => {
-      update((s) => applyAnswer(s, record));
+      /*
+       * Remember the unit she is working through, so Home comes back here even
+       * if an earlier unit still has a challenge left. Smart Review pulls
+       * questions from every unit, so it never moves the bookmark.
+       */
+      const bookmark = spec && spec.kind !== 'review' ? spec.unitId : null;
+      update((s) => {
+        const next = applyAnswer(s, record);
+        return bookmark ? { ...next, lastUnitId: bookmark } : next;
+      });
       setMarks((m) => [...m, record.correct ? 'ok' : 'miss']);
       if (record.xp > 0) {
         const id = Date.now();
@@ -64,7 +73,7 @@ export function Play() {
         setTimeout(() => setFloating((f) => (f?.id === id ? null : f)), 900);
       }
     },
-    [update],
+    [update, spec],
   );
 
   const finish = useCallback(
@@ -283,6 +292,20 @@ export function Play() {
           </span>
           <span className="chip chip-quiet">{GAME_NAMES[q.type]}</span>
           <span className="chip chip-quiet">{ar.play.difficulty[q.difficulty - 1]}</span>
+          {/* Always here, on every kind of question: the words she has to tap
+              to answer can't also be words she taps to listen. */}
+          {canSpeak && (
+            <button
+              type="button"
+              className="speak-btn"
+              style={{ marginInlineStart: 'auto' }}
+              onClick={() => speak(speakableOf(q))}
+              aria-label="Listen to the question"
+              title="Listen to the question"
+            >
+              <Icon name="sound" size={15} />
+            </button>
+          )}
         </div>
 
         {/* Word Hunt draws the sentence itself, and the picture games say
@@ -294,13 +317,16 @@ export function Play() {
           <div className="prompt prompt-instruction">{instruction}</div>
         ) : (
           <div className="prompt">
-            <Speak text={q.prompt} />
+            <Words text={q.prompt} />
           </div>
         )}
 
-        {/* The words are quiet until touched, so the offer has to be written. */}
-        {canSpeak && speakable && (
-          <p className="tiny dim ar" style={{ margin: '-8px 0 12px' }}>{ar.play.tapWord}</p>
+        {/* Both are quiet until touched, so the offer has to be written. */}
+        {canSpeak && (
+          <p className="tiny dim ar" style={{ margin: '-8px 0 12px' }}>
+            {ar.play.listen}
+            {speakable ? ` ${ar.play.listenWords}` : ''}
+          </p>
         )}
 
         <GameSurface

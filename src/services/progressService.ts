@@ -78,7 +78,21 @@ export function unitUnlocked(student: Student, unitIndex: number): boolean {
   return unitCompletion(student, units[unitIndex - 1].id) >= 0.6;
 }
 
+/**
+ * The unit the app should open for her.
+ *
+ * Her own bookmark wins: a unit only needs 60% to unlock the next one, so a
+ * student can be working through unit 3 while unit 1 still has a challenge
+ * left, and sending her back to unit 1 every time would be the app forgetting
+ * where she got to. The scan below is the fallback for a student who has not
+ * played yet, or whose bookmarked unit is finished.
+ */
 export function currentUnitId(student: Student): string {
+  const bookmark = student.lastUnitId;
+  if (bookmark && units.some((u) => u.id === bookmark) && unitCompletion(student, bookmark) < 1) {
+    return bookmark;
+  }
+
   for (let i = 0; i < units.length; i++) {
     if (!unitUnlocked(student, i)) return units[i - 1]?.id ?? units[0].id;
     if (unitCompletion(student, units[i].id) < 1) return units[i].id;

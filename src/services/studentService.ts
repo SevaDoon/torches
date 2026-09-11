@@ -45,6 +45,7 @@ export function blankStudent(name: string, id: string): Student {
     xp: 0,
     streak: 0,
     lastPlayedDay: '',
+    lastUnitId: '',
     bestCombo: 0,
     soundOn: true,
     skills: {

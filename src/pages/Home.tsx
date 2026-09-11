@@ -5,7 +5,7 @@ import { Torch, TorchTierName } from '../components/Torch';
 import { Bar } from '../components/Bar';
 import { Icon, missionIcon } from '../components/Icon';
 import { SkillMeters } from '../components/SkillMeter';
-import { getUnit } from '../data/curriculum';
+import { getUnit, units } from '../data/curriculum';
 import {
   MISSION_PASS,
   currentUnitId,
@@ -33,6 +33,8 @@ export function Home() {
   const next =
     missions.find((m) => missionUnlocked(student, m) && (progress[m.key] ?? 0) < MISSION_PASS) ??
     missions[0];
+  // Where she is in this unit, counted the way the journey lists it.
+  const stage = missions.findIndex((m) => m.key === next.key) + 1;
 
   useEffect(() => {
     void loadLeaderboard(student).then((rows) =>
@@ -86,7 +88,7 @@ export function Home() {
               {missionTitle(next)}
             </h2>
             <p className="small" style={{ margin: '4px 0 0', opacity: 0.85 }}>
-              {ar.unit} <span className="num">{unit.number}</span> · {unit.title}
+              {ar.home.unitLine(unit.number, units.length, unit.title)}
             </p>
           </div>
           <span
@@ -99,7 +101,11 @@ export function Home() {
         <div style={{ marginTop: 14 }}>
           <Bar percent={unitCompletion(student, unitId) * 100} thin />
           <p className="tiny" style={{ margin: '6px 0 0', opacity: 0.85 }}>
-            {ar.home.unitProgress(unit.number, Math.round(unitCompletion(student, unitId) * 100))}
+            {ar.home.stageLine(
+              stage,
+              missions.length,
+              Math.round(unitCompletion(student, unitId) * 100),
+            )}
           </p>
         </div>
       </button>

@@ -9,6 +9,8 @@ import { PICTURES } from './pictures';
 import { untranslatedIds } from './i18n';
 import { levelFromXp, scoreAnswer, xpForLevel, nextDifficulty } from '../services/progressService';
 import { buildRows } from '../services/leaderboardService';
+import { speakableOf } from '../games';
+import { currentUnitId } from '../services/progressService';
 import { blankStudent, guestStudent } from '../services/studentService';
 import type { RosterEntry } from '../services/storage';
 
@@ -35,6 +37,8 @@ export function validateCurriculum(): string[] {
         problems.push(`${at}: needs three real hints`);
       }
       if (q.passageId && !getPassage(q.passageId)) problems.push(`${at}: unknown passage`);
+      // Every question must be one the student can ask to hear.
+      if (!speakableOf(q).trim()) problems.push(`${at}: nothing for the reader to say`);
 
       switch (q.type) {
         case 'mcq':
@@ -145,12 +149,42 @@ export function checkBoard(): string[] {
   return problems;
 }
 
+/*
+ * Where "Continue" sends her. Her bookmark wins while that unit still has work
+ * in it, because a unit unlocks the next at 60% and she is allowed to move on.
+ */
+export function checkResume(): string[] {
+  const problems: string[] = [];
+  const is = (label: string, actual: unknown, expected: unknown) => {
+    if (actual !== expected) problems.push(`${label}: got ${actual}, expected ${expected}`);
+  };
+
+  const first = units[0].id;
+  const third = units[2].id;
+  const blank = blankStudent('Test', 't');
+
+  is('a new student starts at the first unit', currentUnitId(blank), first);
+  is(
+    'her bookmark wins over an unfinished earlier unit',
+    currentUnitId({ ...blank, lastUnitId: third }),
+    third,
+  );
+  is(
+    'a bookmark for a unit that no longer exists is ignored',
+    currentUnitId({ ...blank, lastUnitId: 'unit-gone' }),
+    first,
+  );
+
+  return problems;
+}
+
 export function runSelfCheck() {
   const missing = untranslatedIds();
   const problems = [
     ...validateCurriculum(),
     ...checkScoring(),
     ...checkBoard(),
+    ...checkResume(),
     ...missing.map((id) => `${id}: no Arabic hints/explanation`),
   ];
   if (problems.length) {
