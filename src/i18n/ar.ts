@@ -294,6 +294,7 @@ export const ar = {
     weekNote: 'in the last 7 days',
     me: '· you',
     note: 'Ranking follows your player ID, not your name — renaming never moves you.',
+    teacherNote: 'هذا ترتيب الطالبات. حسابك كمعلّمة خارج المنافسة ولا يظهر في القائمة.',
     guestNote: 'هذا ترتيب الطالبات الفعلي. حساب الزائر لا يُحتسب ولا يظهر في القائمة.',
     loading: 'Loading the board…',
   },

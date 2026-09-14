@@ -84,9 +84,22 @@ export function unitCompletion(student: Student, unitId: string): number {
   return (skills + (p.bossCleared ? 1 : 0)) / parts;
 }
 
+/*
+ * Browse-everything mode: on for the teacher and for a visitor. Neither of them
+ * is working through the course, so the locks are only in their way — the
+ * teacher needs to open any stage to show it in class, and a guest came to look
+ * around. It is a module flag rather than a field on the student because
+ * teacher status is not part of her record; StudentContext sets it.
+ */
+let viewAll = false;
+export const setViewAll = (v: boolean) => {
+  viewAll = v;
+};
+export const isViewAll = () => viewAll;
+
 /** A unit unlocks when the previous one is at least 60% done. */
 export function unitUnlocked(student: Student, unitIndex: number): boolean {
-  if (unitIndex === 0) return true;
+  if (viewAll || unitIndex === 0) return true;
   return unitCompletion(student, units[unitIndex - 1].id) >= 0.6;
 }
 

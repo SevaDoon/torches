@@ -19,7 +19,7 @@ import {
   startGuest,
 } from '../services/studentService';
 import { isTeacher as checkTeacher } from '../services/teacherService';
-import { levelFromXp } from '../services/progressService';
+import { levelFromXp, setViewAll } from '../services/progressService';
 import { ACHIEVEMENTS, newlyEarned } from '../services/achievements';
 import { achievementsAr, ar } from '../i18n/ar';
 import { setSoundEnabled, sfx } from '../utils/sound';
@@ -75,9 +75,14 @@ export function StudentProvider({ children }: { children: ReactNode }) {
   useEffect(() => {
     if (!student || isGuest(student)) {
       setIsTeacher(false);
+      // A visitor came to look around, so nothing in the journey is locked to her.
+      setViewAll(!!student && isGuest(student));
       return;
     }
-    void checkTeacher(student.id).then(setIsTeacher);
+    void checkTeacher(student.id).then((t) => {
+      setIsTeacher(t);
+      setViewAll(t);
+    });
   }, [student?.id]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const toast = useCallback((icon: string, text: string) => {

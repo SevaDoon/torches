@@ -8,7 +8,7 @@ import { ar } from '../i18n/ar';
 const MEDAL_COLOR = ['var(--amber)', 'var(--ink-3)', 'var(--flame)'];
 
 export function Leaderboard() {
-  const { student, guest } = useStudentRequired();
+  const { student, guest, isTeacher } = useStudentRequired();
   const [rows, setRows] = useState<LeaderboardRow[] | null>(null);
   const [mode, setMode] = useState<'all' | 'week'>('all');
 
@@ -47,9 +47,11 @@ export function Leaderboard() {
         </button>
       </div>
 
-      {guest ? (
+      {guest || isTeacher ? (
         <div className="card card-lg">
-          <p className="small ar" style={{ margin: 0 }}>{ar.leaderboard.guestNote}</p>
+          <p className="small ar" style={{ margin: 0 }}>
+            {isTeacher ? ar.leaderboard.teacherNote : ar.leaderboard.guestNote}
+          </p>
         </div>
       ) : (
         <div className="card card-lg card-hot">

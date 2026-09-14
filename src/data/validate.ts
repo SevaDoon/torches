@@ -7,10 +7,10 @@
 import { getPassage, units } from './curriculum';
 import { PICTURES } from './pictures';
 import { untranslatedIds } from './i18n';
-import { levelFromXp, scoreAnswer, xpForLevel, nextDifficulty } from '../services/progressService';
+import { levelFromXp, scoreAnswer, setViewAll, unitUnlocked, xpForLevel, nextDifficulty } from '../services/progressService';
 import { buildRows } from '../services/leaderboardService';
 import { answerTextOf, speakableOf } from '../games';
-import { buildPlan, missionsFor, nextMissionFor, pickQuestion } from '../engine/missions';
+import { buildPlan, missionUnlocked, missionsFor, nextMissionFor, pickQuestion } from '../engine/missions';
 import { currentUnitId } from '../services/progressService';
 import { blankStudent, guestStudent } from '../services/studentService';
 import type { RosterEntry } from '../services/storage';
@@ -170,6 +170,36 @@ export function checkBoard(): string[] {
   is('a visitor is nobody on the board', seen.some((r) => r.isMe), false);
   is('a visitor changes nothing', seen[0].id, 'a');
 
+  // The teacher runs the race, she does not enter it.
+  const teachers = new Set(['a']);
+  const asTeacher = buildRows(roster, { ...blankStudent('Aisha', 'a'), xp: 5000 }, teachers);
+  is('the teacher is off the board', asTeacher.length, 1);
+  is('the teacher has no row of her own', asTeacher.some((r) => r.isMe), false);
+  is('the students still rank', asTeacher[0].id, 'b');
+
+  const studentView = buildRows(roster, me, teachers);
+  is('a student does not see the teacher either', studentView.length, 1);
+  is('her own row survives', studentView[0].id, 'b');
+
+  return problems;
+}
+
+/** Nothing is locked for whoever is only looking: the teacher, or a visitor. */
+export function checkViewAll(): string[] {
+  const problems: string[] = [];
+  const blank = blankStudent('Test', 't');
+  const boss = missionsFor(units[0].id).find((m) => m.kind === 'boss')!;
+
+  if (unitUnlocked(blank, units.length - 1)) problems.push('a new student should not have the last unit open');
+  if (missionUnlocked(blank, boss)) problems.push('a new student should not have the boss open');
+
+  setViewAll(true);
+  try {
+    if (!unitUnlocked(blank, units.length - 1)) problems.push('view-all should open every unit');
+    if (!missionUnlocked(blank, boss)) problems.push('view-all should open every stage');
+  } finally {
+    setViewAll(false);
+  }
   return problems;
 }
 
@@ -259,6 +289,7 @@ export function runSelfCheck() {
     ...checkScoring(),
     ...checkBoard(),
     ...checkResume(),
+    ...checkViewAll(),
     ...checkPicking(),
     ...missing.map((id) => `${id}: no Arabic hints/explanation`),
   ];

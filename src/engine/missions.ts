@@ -6,6 +6,7 @@ import {
   missionPassed,
   unitProgress,
   unitUnlocked,
+  isViewAll,
 } from '../services/progressService';
 import { shuffle } from '../utils/random';
 
@@ -31,6 +32,7 @@ export function missionsFor(unitId: string): MissionSpec[] {
 }
 
 export function missionUnlocked(student: Student, spec: MissionSpec): boolean {
+  if (isViewAll()) return true;
   const p = unitProgress(student, spec.unitId);
   const done = SKILL_ORDER.filter((s) => (p.missions[s] ?? 0) > 0).length;
   if (spec.kind === 'mixed') return done >= 2;

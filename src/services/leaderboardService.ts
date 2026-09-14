@@ -6,6 +6,7 @@ import type { LeaderboardRow, Student } from '../types';
 import { driver, weeklyXpOf, type RosterEntry } from './storage';
 import { levelFromXp } from './progressService';
 import { isGuest } from './studentService';
+import { listTeacherIds } from './teacherService';
 
 /**
  * The roster as a ranked board.
@@ -15,13 +16,20 @@ import { isGuest } from './studentService';
  * And a visitor watches the class without joining it — she has no record to
  * rank, and putting her on the board would be putting a guest in the contest.
  */
-export function buildRows(roster: RosterEntry[], me: Student): LeaderboardRow[] {
-  const rows = isGuest(me)
-    ? roster
-    : [
-        ...roster.filter((r) => r.id !== me.id),
-        { id: me.id, name: me.name, avatar: me.avatar, xp: me.xp, weeklyXp: weeklyXpOf(me) },
-      ];
+export function buildRows(
+  roster: RosterEntry[],
+  me: Student,
+  teacherIds: ReadonlySet<string> = new Set(),
+): LeaderboardRow[] {
+  // A teacher runs the race, she does not enter it — the same rule as a guest.
+  const board = roster.filter((r) => !teacherIds.has(r.id));
+  const rows =
+    isGuest(me) || teacherIds.has(me.id)
+      ? board
+      : [
+          ...board.filter((r) => r.id !== me.id),
+          { id: me.id, name: me.name, avatar: me.avatar, xp: me.xp, weeklyXp: weeklyXpOf(me) },
+        ];
 
   return [...rows]
     .sort((a, b) => b.xp - a.xp || a.name.localeCompare(b.name))
@@ -33,7 +41,8 @@ export function buildRows(roster: RosterEntry[], me: Student): LeaderboardRow[] 
 }
 
 export async function loadLeaderboard(me: Student): Promise<LeaderboardRow[]> {
-  return buildRows(await driver.loadRoster(), me);
+  const [roster, teacherIds] = await Promise.all([driver.loadRoster(), listTeacherIds()]);
+  return buildRows(roster, me, teacherIds);
 }
 
 export function rankOf(rows: LeaderboardRow[], id: string): number {
