@@ -3,18 +3,46 @@ import { useStudentRequired } from '../state/StudentContext';
 import type { LeaderboardRow } from '../types';
 import { loadLeaderboard, rankOf, weeklyRankOf } from '../services/leaderboardService';
 import { Icon } from '../components/Icon';
+import { loadNotice, saveNotice, type BoardNotice } from '../services/noticeService';
 import { ar } from '../i18n/ar';
 
 const MEDAL_COLOR = ['var(--amber)', 'var(--ink-3)', 'var(--flame)'];
 
 export function Leaderboard() {
-  const { student, guest, isTeacher } = useStudentRequired();
+  const { student, guest, isTeacher, toast } = useStudentRequired();
   const [rows, setRows] = useState<LeaderboardRow[] | null>(null);
   const [mode, setMode] = useState<'all' | 'week'>('all');
+
+  const [notice, setNotice] = useState<BoardNotice | null>(null);
+  const [draft, setDraft] = useState<string | null>(null);
+  const [saving, setSaving] = useState(false);
 
   useEffect(() => {
     void loadLeaderboard(student).then(setRows);
   }, [student]);
+
+  useEffect(() => {
+    void loadNotice().then(setNotice);
+  }, []);
+
+  /*
+   * The teacher is above the board, not on it. Her card is one shared document,
+   * so the moment she saves, every student sees her and whatever she wrote.
+   */
+  const publish = async () => {
+    setSaving(true);
+    const next = { name: student.name, avatar: student.avatar, text: (draft ?? '').trim() };
+    try {
+      await saveNotice(next);
+      setNotice({ ...next, updatedAt: Date.now() });
+      setDraft(null);
+      toast('📣', ar.leaderboard.noticeSaved);
+    } catch {
+      toast('⚠️', ar.leaderboard.noticeFailed);
+    } finally {
+      setSaving(false);
+    }
+  };
 
   if (!rows) return <div className="page muted">{ar.leaderboard.loading}</div>;
 
@@ -46,6 +74,49 @@ export function Leaderboard() {
           {ar.leaderboard.week}
         </button>
       </div>
+
+      {/* The teacher's card sits above the ranking, outside the race. */}
+      {(isTeacher || (notice && (notice.text || notice.name))) && (
+        <div className="card card-lg stack" style={{ gap: 10 }}>
+          <div className="row" style={{ gap: 11 }}>
+            <span className="lb-av">{isTeacher ? student.avatar : (notice?.avatar ?? '👩‍🏫')}</span>
+            <div style={{ minWidth: 0 }}>
+              <div className="eyebrow ar">{ar.leaderboard.teacherCard}</div>
+              <div style={{ fontWeight: 700 }}>
+                <bdi>{isTeacher ? student.name : notice?.name}</bdi>
+              </div>
+            </div>
+          </div>
+
+          {isTeacher ? (
+            <div className="stack" style={{ gap: 8 }}>
+              <label className="tiny dim ar" htmlFor="board-notice">
+                {ar.leaderboard.noticeLabel}
+              </label>
+              <textarea
+                id="board-notice"
+                className="field ar"
+                rows={3}
+                maxLength={280}
+                placeholder={ar.leaderboard.noticePlaceholder}
+                value={draft ?? notice?.text ?? ''}
+                onChange={(e) => setDraft(e.target.value)}
+              />
+              <button
+                className="btn btn-ink btn-sm"
+                onClick={() => void publish()}
+                disabled={saving}
+              >
+                {ar.leaderboard.noticeSave}
+              </button>
+            </div>
+          ) : (
+            notice?.text && (
+              <p className="ar" style={{ margin: 0, whiteSpace: 'pre-wrap' }}>{notice.text}</p>
+            )
+          )}
+        </div>
+      )}
 
       {guest || isTeacher ? (
         <div className="card card-lg">

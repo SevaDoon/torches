@@ -62,29 +62,25 @@ export const firestoreDriver: TorchesDriver = {
   },
   async loadRoster() {
     try {
+      /*
+       * Every account, including one that has not answered a question yet: a
+       * student who has just signed up should find herself on the board from
+       * her first minute, at the bottom, rather than wonder whether the class
+       * can see her at all.
+       */
       const rows = await queryTop<Partial<Student> & { weeklyXp?: number }>(
         'students',
         'xp',
-        60,
-        ['id', 'name', 'avatar', 'xp', 'weeklyXp', 'totalAnswers'],
+        200,
+        ['id', 'name', 'avatar', 'xp', 'weeklyXp'],
       );
-      return (
-        rows
-          /*
-           * Real players only. An account that has never answered a question is
-           * a test account or an abandoned signup, and neither of those belongs
-           * on a board meant to show the class competing. The teacher still
-           * sees every account on her own screen.
-           */
-          .filter((r) => (r.totalAnswers ?? 0) > 0)
-          .map((r) => ({
-            id: r.id ?? '',
-            name: r.name ?? '',
-            avatar: r.avatar ?? '🔥',
-            xp: r.xp ?? 0,
-            weeklyXp: r.weeklyXp ?? 0,
-          }))
-      );
+      return rows.map((r) => ({
+        id: r.id ?? '',
+        name: r.name ?? '',
+        avatar: r.avatar ?? '🔥',
+        xp: r.xp ?? 0,
+        weeklyXp: r.weeklyXp ?? 0,
+      }));
     } catch {
       return [];
     }

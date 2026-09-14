@@ -297,6 +297,12 @@ export const ar = {
     teacherNote: 'هذا ترتيب الطالبات. حسابك كمعلّمة خارج المنافسة ولا يظهر في القائمة.',
     guestNote: 'هذا ترتيب الطالبات الفعلي. حساب الزائر لا يُحتسب ولا يظهر في القائمة.',
     loading: 'Loading the board…',
+    teacherCard: 'المعلّمة',
+    noticeLabel: 'رسالتك للطالبات',
+    noticePlaceholder: 'اكتبي ما تريدين أن تقرأه الطالبات هنا…',
+    noticeSave: 'حفظ الرسالة',
+    noticeSaved: 'ظهرت رسالتك في لوحة الترتيب.',
+    noticeFailed: 'تعذّر حفظ الرسالة. حاولي مرة أخرى.',
   },
 
   progress: {
