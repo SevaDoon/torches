@@ -1,0 +1,13 @@
+{
+  "name": "studyforge",
+  "private": true,
+  "version": "1.0.0",
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "tsc -b && vite build",
+    "preview": "vite preview",
+    "typecheck": "tsc -b",
+    "check": "esbuild src/data/selfcheck-cli.ts --bundle --format=esm --platform=neutral --log-level=warning | node --input-type=module"
+  }
+}
