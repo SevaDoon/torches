@@ -13,8 +13,9 @@ import {
   toCsv,
   type ClassRow,
 } from '../services/teacherService';
-import { levelFromXp } from '../services/progressService';
-import { SKILL_ORDER } from '../data/curriculum';
+import { currentUnitId, levelFromXp } from '../services/progressService';
+import { SKILL_ORDER, getUnit, units } from '../data/curriculum';
+import { saveGate } from '../services/noticeService';
 import { skillEn, skillColor } from '../i18n/labels';
 import { Bar } from '../components/Bar';
 import { Icon } from '../components/Icon';
@@ -24,7 +25,7 @@ type Sort = 'xp' | 'name' | 'recent' | 'accuracy';
 type Pending = { id: string; action: 'delete' | 'reset' } | null;
 
 export function Teacher() {
-  const { student, toast, isTeacher } = useStudentRequired();
+  const { student, toast, isTeacher, maxUnit, applyMaxUnit } = useStudentRequired();
   const navigate = useNavigate();
 
   const [rows, setRows] = useState<ClassRow[] | null>(null);
@@ -37,6 +38,24 @@ export function Teacher() {
   const [query, setQuery] = useState('');
   const [sort, setSort] = useState<Sort>('xp');
   const [busy, setBusy] = useState(false);
+  const [gate, setGate] = useState<number | null>(null);
+
+  /*
+   * The ceiling on how far the class may go. The teacher's own screens ignore
+   * it (she needs every unit open to teach from), so what she sets here is only
+   * ever felt by the students.
+   */
+  const publishGate = async (next: number) => {
+    setGate(next);
+    try {
+      await saveGate(next);
+      applyMaxUnit(next);
+      toast(next === 0 ? '🔓' : '🔒', ar.teacher.gateSaved(next));
+    } catch {
+      setGate(maxUnit);
+      toast('⚠️', ar.teacher.gateFailed);
+    }
+  };
 
   const refresh = useCallback(() => {
     setError('');
@@ -224,6 +243,30 @@ export function Teacher() {
         </>
       )}
 
+      <section className="card card-lg stack" style={{ gap: 10 }}>
+        <div>
+          <div className="eyebrow ar">{ar.teacher.gateTitle}</div>
+          <p className="tiny dim ar" style={{ margin: '4px 0 0' }}>{ar.teacher.gateNote}</p>
+        </div>
+        <div className="row wrap" style={{ gap: 6 }}>
+          <button
+            className={'btn btn-sm' + ((gate ?? maxUnit) === 0 ? ' btn-ink' : '')}
+            onClick={() => void publishGate(0)}
+          >
+            {ar.teacher.gateOff}
+          </button>
+          {units.map((u) => (
+            <button
+              key={u.id}
+              className={'btn btn-sm' + ((gate ?? maxUnit) === u.number ? ' btn-ink' : '')}
+              onClick={() => void publishGate(u.number)}
+            >
+              {ar.teacher.gateUpTo(u.number)}
+            </button>
+          ))}
+        </div>
+      </section>
+
       <div className="row wrap" style={{ gap: 8 }}>
         <button className="btn btn-sm" onClick={refresh}>
           <Icon name="refresh" size={15} />
@@ -291,6 +334,10 @@ export function Teacher() {
               </div>
 
               <div className="row wrap" style={{ gap: 6 }}>
+                <span className="chip chip-hot ar">
+                  {ar.teacher.reached}{' '}
+                  {ar.teacher.unitShort(getUnit(currentUnitId(r.raw))?.number ?? 1)}
+                </span>
                 <span className="chip chip-quiet">
                   {ar.teacher.answers} <span className="num">{r.totalAnswers}</span>
                 </span>

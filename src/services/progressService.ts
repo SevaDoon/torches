@@ -97,8 +97,25 @@ export const setViewAll = (v: boolean) => {
 };
 export const isViewAll = () => viewAll;
 
+/*
+ * The teacher's ceiling: the highest unit number the class may open, or 0 for
+ * no ceiling. It exists so a student cannot run ahead of the unit the class is
+ * actually studying this week — the lesson is taught together, and arriving at
+ * unit 7 alone is not the same as getting there with everyone.
+ *
+ * It only ever closes units, never opens them: a student still has to earn her
+ * way up to the ceiling the usual way.
+ */
+let unitCeiling = 0;
+export const setUnitCeiling = (n: number) => {
+  unitCeiling = n;
+};
+export const isGatedUnit = (unitIndex: number) =>
+  !viewAll && unitCeiling > 0 && unitIndex + 1 > unitCeiling;
+
 /** A unit unlocks when the previous one is at least 60% done. */
 export function unitUnlocked(student: Student, unitIndex: number): boolean {
+  if (isGatedUnit(unitIndex)) return false;
   if (viewAll || unitIndex === 0) return true;
   return unitCompletion(student, units[unitIndex - 1].id) >= 0.6;
 }
@@ -114,7 +131,8 @@ export function unitUnlocked(student: Student, unitIndex: number): boolean {
  */
 export function currentUnitId(student: Student): string {
   const bookmark = student.lastUnitId;
-  if (bookmark && units.some((u) => u.id === bookmark) && unitCompletion(student, bookmark) < 1) {
+  const bookmarkIndex = units.findIndex((u) => u.id === bookmark);
+  if (bookmarkIndex >= 0 && !isGatedUnit(bookmarkIndex) && unitCompletion(student, bookmark) < 1) {
     return bookmark;
   }
 

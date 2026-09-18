@@ -7,7 +7,15 @@
 import { getPassage, units } from './curriculum';
 import { PICTURES } from './pictures';
 import { untranslatedIds } from './i18n';
-import { levelFromXp, scoreAnswer, setViewAll, unitUnlocked, xpForLevel, nextDifficulty } from '../services/progressService';
+import {
+  levelFromXp,
+  scoreAnswer,
+  setUnitCeiling,
+  setViewAll,
+  unitUnlocked,
+  xpForLevel,
+  nextDifficulty,
+} from '../services/progressService';
 import { buildRows } from '../services/leaderboardService';
 import { answerTextOf, speakableOf } from '../games';
 import { buildPlan, missionUnlocked, missionsFor, nextMissionFor, pickQuestion } from '../engine/missions';
@@ -184,6 +192,46 @@ export function checkBoard(): string[] {
   return problems;
 }
 
+/*
+ * The teacher's ceiling. The point of it is that a student cannot run ahead of
+ * the unit the class is studying, so what matters is that it closes units she
+ * would otherwise have open — and that lifting it gives them straight back.
+ */
+export function checkGate(): string[] {
+  const problems: string[] = [];
+  // A student who has finished unit 1 outright: unit 2 is hers by right.
+  const ahead = {
+    ...blankStudent('Test', 't'),
+    units: {
+      [units[0].id]: {
+        missions: { grammar: 1, vocabulary: 1, reading: 1, form: 1 },
+        bossCleared: true,
+      },
+    },
+  };
+
+  if (!unitUnlocked(ahead, 1)) problems.push('unit 2 should be open once unit 1 is done');
+
+  setUnitCeiling(1);
+  try {
+    if (unitUnlocked(ahead, 1)) problems.push('the ceiling should close the unit above it');
+    if (!unitUnlocked(ahead, 0)) problems.push('the ceiling should leave the units below it open');
+    if (currentUnitId({ ...ahead, lastUnitId: units[1].id }) === units[1].id) {
+      problems.push('a bookmark should not walk her back into a closed unit');
+    }
+    // She is the teacher: the ceiling is for the class, not for the one teaching.
+    setViewAll(true);
+    if (!unitUnlocked(ahead, 5)) problems.push('the ceiling should not apply to the teacher');
+    setViewAll(false);
+  } finally {
+    setUnitCeiling(0);
+    setViewAll(false);
+  }
+
+  if (!unitUnlocked(ahead, 1)) problems.push('lifting the ceiling should give the unit back');
+  return problems;
+}
+
 /** Nothing is locked for whoever is only looking: the teacher, or a visitor. */
 export function checkViewAll(): string[] {
   const problems: string[] = [];
@@ -290,6 +338,7 @@ export function runSelfCheck() {
     ...checkBoard(),
     ...checkResume(),
     ...checkViewAll(),
+    ...checkGate(),
     ...checkPicking(),
     ...missing.map((id) => `${id}: no Arabic hints/explanation`),
   ];

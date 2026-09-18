@@ -19,10 +19,11 @@ import {
   startGuest,
 } from '../services/studentService';
 import { isTeacher as checkTeacher } from '../services/teacherService';
-import { levelFromXp, setViewAll } from '../services/progressService';
+import { levelFromXp, setUnitCeiling, setViewAll } from '../services/progressService';
 import { ACHIEVEMENTS, newlyEarned } from '../services/achievements';
 import { achievementsAr, ar } from '../i18n/ar';
 import { setSoundEnabled, sfx } from '../utils/sound';
+import { loadGate } from '../services/noticeService';
 
 export interface Toast {
   id: number;
@@ -37,6 +38,10 @@ interface Ctx {
   isTeacher: boolean;
   /** True while looking around as a visitor: nothing is saved, nothing is ranked. */
   guest: boolean;
+  /** Highest unit the teacher lets the class open; 0 when she has set no ceiling. */
+  maxUnit: number;
+  /** After she changes the ceiling, so the journey updates without a reload. */
+  applyMaxUnit: (n: number) => void;
   /** Create a new account with a name and a PIN. */
   register: (name: string, pin: string) => Promise<void>;
   /** Sign back in on any device with the same name and PIN. */
@@ -61,6 +66,7 @@ export function StudentProvider({ children }: { children: ReactNode }) {
   const [isTeacher, setIsTeacher] = useState(false);
   const [toasts, setToasts] = useState<Toast[]>([]);
   const [celebrating, setCelebrating] = useState(false);
+  const [maxUnit, setMaxUnit] = useState(0);
   const nextId = useRef(1);
 
   useEffect(() => {
@@ -70,6 +76,21 @@ export function StudentProvider({ children }: { children: ReactNode }) {
       setLoading(false);
     });
   }, []);
+
+  const applyMaxUnit = useCallback((n: number) => {
+    setUnitCeiling(n);
+    setMaxUnit(n);
+  }, []);
+
+  /*
+   * The teacher's ceiling is class-wide, so it is one read for everybody — but
+   * only once somebody is signed in, since Firestore refuses an anonymous read
+   * and the welcome screen has no token yet.
+   */
+  useEffect(() => {
+    if (!student) return;
+    void loadGate().then(applyMaxUnit);
+  }, [student?.id, applyMaxUnit]); // eslint-disable-line react-hooks/exhaustive-deps
 
   // Teacher status is a property of the account, so re-check whenever it changes.
   useEffect(() => {
@@ -162,6 +183,8 @@ export function StudentProvider({ children }: { children: ReactNode }) {
       loading,
       isTeacher,
       guest,
+      maxUnit,
+      applyMaxUnit,
       register,
       login,
       enterAsGuest,
@@ -177,6 +200,8 @@ export function StudentProvider({ children }: { children: ReactNode }) {
       loading,
       isTeacher,
       guest,
+      maxUnit,
+      applyMaxUnit,
       register,
       login,
       enterAsGuest,

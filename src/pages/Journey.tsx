@@ -2,7 +2,12 @@
 import { useNavigate } from 'react-router-dom';
 import { useStudentRequired } from '../state/StudentContext';
 import { units } from '../data/curriculum';
-import { currentUnitId, missionPassed, unitUnlocked } from '../services/progressService';
+import {
+  currentUnitId,
+  isGatedUnit,
+  missionPassed,
+  unitUnlocked,
+} from '../services/progressService';
 import { missionUnlocked, missionsFor, unitStages } from '../engine/missions';
 import { Bar } from '../components/Bar';
 import { Icon, missionIcon } from '../components/Icon';
@@ -72,8 +77,8 @@ export function Journey() {
                     </p>
                   )}
                   {!unlocked && (
-                    <p className="tiny dim" style={{ margin: '1px 0 7px' }}>
-                      {ar.journey.locked}
+                    <p className={'tiny dim' + (isGatedUnit(i) ? ' ar' : '')} style={{ margin: '1px 0 7px' }}>
+                      {isGatedUnit(i) ? ar.journey.gated : ar.journey.locked}
                     </p>
                   )}
                   {/* The bar counts the same stages the row does. */}
