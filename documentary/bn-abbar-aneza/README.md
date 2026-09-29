@@ -14,7 +14,7 @@
 | مطابقة نص البيتين المعلَّمين «قيد المطابقة» | ⏳ مع منشوريه في 2021 و2025 |
 | تحليل حساب TikTok ‏‎@bn.abbar | ⏳ لم يُشاهَد: الموقع محجوب في بيئة العمل |
 
-النسخة المصيّرة: `renders/bn-abbar-aneza_v1_workingcut.mp4`
+النسخة المصيّرة: [`renders/bn-abbar-aneza_v1_workingcut.mp4`](renders/bn-abbar-aneza_v1_workingcut.mp4) — ‏1920×1080، ‏25 إطاراً/ث، H.264؛ الصوت AAC ستيريو، ‎-20 LUFS متكامل، ذروة ‎-3.9 dBFS، مدى ديناميكي 16.8 LU.
 
 ## إعادة التصيير
 
