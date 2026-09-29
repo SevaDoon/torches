@@ -1,0 +1,5 @@
+.cache/
+renders/.picture_*
+renders/.mix_*
+*.part*.mp4
+__pycache__/
