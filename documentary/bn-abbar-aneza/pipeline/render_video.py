@@ -28,7 +28,7 @@ class Renderer:
         self.shots = film.build_shots()
         self.bg = film.Backgrounds()
         self.vintage = getattr(film, "LOOK", None) == "vintage"
-        self.grain = Grain(sigma=(3.0 if self.vintage else 2.4) / 255.0)
+        self.grain = Grain(sigma=getattr(film, "GRAIN", 3.0 if self.vintage else 2.4) / 255.0)
         self.slots = {}
         self.black = np.array(BLACK, np.float32) / 255.0
         if self.vintage:
@@ -46,18 +46,15 @@ class Renderer:
             self.slots[shot.slot] = film.SlotReader(shot.slot, shot.start)
         return self.slots[shot.slot]
 
-    def frame(self, fi):
-        t = fi / FPS
-        s = self.shot_at(t)
+    def render_shot(self, s, t, fi):
         archival = None
         if s.bg == "slot":
             rd = self.slot(s)
             archival = rd.frame(t) if rd.available else None
         if archival is not None:
-            # Real archive: shown as-is — no push, no grain, no text on faces.
-            f = archival
+            # Real archive: shown as-is — no push, no text on faces.
             g = s.gain(t)
-            return to_uint8(self.black + (f - self.black) * g)
+            return self.black + (archival - self.black) * g
         if s.bg == "black":
             f = self.bg.black.copy()
         elif s.bg == "paper":
@@ -81,6 +78,19 @@ class Renderer:
         g = s.gain(t)
         if g < 1.0:
             f = self.black + (f - self.black) * g
+        return f
+
+    def frame(self, fi):
+        t = fi / FPS
+        s = self.shot_at(t)
+        i = self.shots.index(s)
+        f = self.render_shot(s, t, fi)
+        xf = getattr(s, "xfade", 0.0)
+        if xf > 0 and i > 0 and t < s.start + xf:     # dissolve from the previous shot
+            from gfx import ease_in_out
+            fp = self.render_shot(self.shots[i - 1], t, fi)
+            a = ease_in_out((t - s.start) / xf)
+            f = fp * (1 - a) + f * a
         if self.vintage:
             self.look.apply(f, fi, t)
         self.grain.apply(f, fi)

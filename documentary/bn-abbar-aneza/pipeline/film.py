@@ -44,15 +44,28 @@ class Run(El):
     """A run of text placed by its left edge and baseline."""
 
     def __init__(self, text, key, size, color, x_left, baseline, t_in, rise_px=6,
-                 alpha=1.0, **kw):
+                 alpha=1.0, shadow=0.0, **kw):
         super().__init__(t_in, **kw)
         self.g = render_run(text, key, size, tuple(color))
         self.x, self.b, self.rise_px, self.alpha = x_left, baseline, rise_px, alpha
+        self.shadow = None
+        if shadow > 0:                      # soft dark halo for legibility over photos
+            from PIL import ImageFilter
+            a = Image.fromarray((self.g.rgba[..., 3] * 255).astype(np.uint8))
+            a = a.filter(ImageFilter.MaxFilter(3)).filter(
+                ImageFilter.GaussianBlur(max(2.0, size * 0.10)))
+            sh = np.zeros(self.g.rgba.shape, np.float32)
+            sh[..., 3] = np.asarray(a, np.float32) / 255.0 * shadow
+            self.shadow = sh
 
     def draw(self, frame, t):
         o = self.opacity(t) * self.alpha
         if o > 0:
-            place_run(frame, self.g, self.x, self.b + self.rise(t, self.rise_px), o)
+            y = self.b + self.rise(t, self.rise_px)
+            if self.shadow is not None:
+                blit(frame, self.shadow, int(round(self.x - self.g.pad)),
+                     int(round(y - self.g.pad - self.g.ascent + 3)), o)
+            place_run(frame, self.g, self.x, y, o)
 
 
 def line(text, key, size, color, baseline, t_in, cx=W / 2, **kw):

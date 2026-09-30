@@ -28,6 +28,20 @@ CH = int((LAT1 - LAT0) * K)
 LAND = (216, 203, 170)
 SEA = (228, 222, 208)
 
+# Colour schemes: "light" = engraved paper map (v1/v2); "dark" = v3 night map.
+STYLES = {
+    "light": dict(land=LAND, sea=SEA, ink=INK, water=(95, 108, 104), sea_label=(70, 78, 80),
+                  accent=OXIDE, tex=1.0),
+    "dark": dict(land=(46, 42, 37), sea=(17, 18, 20), ink=(214, 204, 184),
+                 water=(120, 124, 120), sea_label=(140, 146, 146), accent=(212, 175, 106),
+                 tex=0.35),
+}
+STYLE = "light"
+
+
+def _st():
+    return STYLES[STYLE]
+
 
 def proj(lon, lat):
     return (lon - LON0) * KX, (LAT1 - lat) * K
@@ -80,7 +94,7 @@ def _draw_lines(d, geoms, fill, width):
 
 # Arabic labels: (text, lon, lat, size, rotation_deg, kind)
 REGION_LABELS = [
-    ("الحجاز", 40.1, 23.1, 64, -55, "region"),
+    ("الحجاز", 40.4, 23.4, 60, 0, "region"),
     ("نجد", 44.6, 24.6, 72, 0, "region"),
     ("النفود", 41.3, 28.35, 56, 0, "region"),
     ("بادية الشام", 39.6, 32.9, 70, 0, "region"),
@@ -106,8 +120,10 @@ ROUTE_BRANCH = [(37.90, 30.40), (38.60, 31.90), (38.90, 33.30), (39.30, 34.40)]
 
 def build(force=False):
     """Return (canvas uint8 HxWx3, labels uint8 HxWx4). Cached on disk."""
-    cpath = os.path.join(CACHE, "map_canvas.npy")
-    lpath = os.path.join(CACHE, "map_labels.npy")
+    sfx = "" if STYLE == "light" else "_" + STYLE
+    cpath = os.path.join(CACHE, f"map_canvas{sfx}.npy")
+    lpath = os.path.join(CACHE, f"map_labels{sfx}.npy")
+    st = _st()
     if not force and os.path.exists(cpath) and os.path.exists(lpath):
         return np.load(cpath), np.load(lpath)
     os.makedirs(CACHE, exist_ok=True)
@@ -115,6 +131,7 @@ def build(force=False):
     # ------------------------------------------------ paper + land tint
     paper = paper_texture(seed=11, size=(CH, CW), falloff=False)
     paper = paper / (np.array([230, 222, 205], np.float32) / 255.0)  # relative texture
+    paper = 1.0 + (paper - 1.0) * st["tex"]
 
     land = unary_union([_proj_geom(shape(f["geometry"])).simplify(0.6)
                         for f in _load("land")])
@@ -131,13 +148,13 @@ def build(force=False):
             dm.polygon(list(p.exterior.coords), fill=0)
     mask = mask.filter(ImageFilter.GaussianBlur(1.2))
     m = np.asarray(mask, np.float32)[..., None] / 255.0
-    col = (np.array(LAND, np.float32) * m + np.array(SEA, np.float32) * (1 - m)) / 255.0
+    col = (np.array(st["land"], np.float32) * m + np.array(st["sea"], np.float32) * (1 - m)) / 255.0
     base = np.clip(col * paper, 0, 1)
     img = Image.fromarray((base * 255).astype(np.uint8)).convert("RGBA")
 
     ink = Image.new("RGBA", (CW, CH), (0, 0, 0, 0))
     d = ImageDraw.Draw(ink)
-    ink_rgb = INK
+    ink_rgb = tuple(st["ink"])
 
     # ------------------------------------------------ graticule (5°)
     for lon in range(25, 62, 5):
@@ -198,7 +215,7 @@ def build(force=False):
     # ------------------------------------------------ labels layer (parallax)
     labels = Image.new("RGBA", (CW, CH), (0, 0, 0, 0))
     for txt, lon, lat, size, rot, kind in REGION_LABELS:
-        colr = INK if kind == "region" else (70, 78, 80)
+        colr = tuple(st["ink"]) if kind == "region" else tuple(st["sea_label"])
         g = render_run(txt, "verse", size, colr)
         a = np.clip(g.rgba[..., 3] * (0.62 if kind == "region" else 0.55), 0, 1)
         rgb = np.array(colr, np.float32)
@@ -212,10 +229,10 @@ def build(force=False):
     for txt, lon, lat, dx, dy in PLACES:
         x, y = proj(lon, lat)
         if txt != "خيبر":            # Khaybar's marker is drawn live, in oxide
-            dl.ellipse([x - 5, y - 5, x + 5, y + 5], fill=INK + (235,))
-        g = render_run(txt, "verse", 46, INK)
+            dl.ellipse([x - 5, y - 5, x + 5, y + 5], fill=tuple(st["ink"]) + (235,))
+        g = render_run(txt, "verse", 46, tuple(st["ink"]))
         a = (g.rgba[..., 3] * 255).astype(np.uint8)
-        tile = np.dstack([np.broadcast_to(np.array(INK, np.uint8), a.shape + (3,)), a])
+        tile = np.dstack([np.broadcast_to(np.array(st["ink"], np.uint8), a.shape + (3,)), a])
         im = Image.fromarray(tile, "RGBA")
         lx = x + dx if dx > 0 else x + dx - g.advance
         labels.alpha_composite(im, (int(lx - g.pad), int(y + dy - g.pad - g.ascent + 30)))
@@ -227,7 +244,7 @@ def build(force=False):
 
 
 def WATERLINE_RGBA(alpha):
-    return (95, 108, 104, alpha)
+    return tuple(_st()["water"]) + (alpha,)
 
 
 class MapCamera:
@@ -309,7 +326,7 @@ def draw_route(frame, cam, clon, clat, hdeg, progress, width=3.2, dash=(18, 11))
     layer = layer.resize((W, H), Image.LANCZOS)
     a = np.asarray(layer, np.float32)[..., None] / 255.0 * 0.92
     frame *= (1 - a)
-    frame += a * (np.array(OXIDE, np.float32) / 255.0)
+    frame += a * (np.array(_st()["accent"], np.float32) / 255.0)
 
 
 def draw_marker(frame, cam, clon, clat, hdeg, opacity, lon=KHAYBAR[0], lat=KHAYBAR[1]):
@@ -329,4 +346,4 @@ def draw_marker(frame, cam, clon, clat, hdeg, opacity, lon=KHAYBAR[0], lat=KHAYB
     if 0 <= x0 and 0 <= y0 and x0 + size <= W and y0 + size <= H:
         dst = frame[y0:y0 + size, x0:x0 + size]
         dst *= (1 - a)
-        dst += a * (np.array(OXIDE, np.float32) / 255.0)
+        dst += a * (np.array(_st()["accent"], np.float32) / 255.0)
