@@ -13,18 +13,27 @@ from multiprocessing import Process
 import numpy as np
 from PIL import Image
 
+import importlib
+
 from config import BLACK, FPS, H, W
 from gfx import Grain, push, to_uint8
-import film
+
+# Which edit to render: film (v1) or film_v2. Set with --edit or BNABBAR_EDIT.
+EDIT = os.environ.get("BNABBAR_EDIT", "film")
+film = importlib.import_module(EDIT)
 
 
 class Renderer:
     def __init__(self):
         self.shots = film.build_shots()
         self.bg = film.Backgrounds()
-        self.grain = Grain()
+        self.vintage = getattr(film, "LOOK", None) == "vintage"
+        self.grain = Grain(sigma=(3.0 if self.vintage else 2.4) / 255.0)
         self.slots = {}
         self.black = np.array(BLACK, np.float32) / 255.0
+        if self.vintage:
+            from look import Vintage
+            self.look = Vintage()
 
     def shot_at(self, t):
         for s in self.shots:
@@ -53,6 +62,8 @@ class Renderer:
             f = self.bg.black.copy()
         elif s.bg == "paper":
             f = self.bg.paper.copy()
+        elif s.bg == "album" or (s.bg == "slot" and self.vintage):
+            f = self.bg.album.copy()
         elif s.bg == "map":
             f = self.bg.map_view(s.map, t)
         else:                                   # empty archive slot: placeholder card
@@ -63,10 +74,15 @@ class Renderer:
             if s.bg == "slot" and el.t_in == 0:
                 el.t_in = s.start               # slot-card text is laid out at t=0
             el.draw(f, t)
-        f = push(f, s.push_at(t), s.anchor)
+        if self.vintage:
+            f = push(f, max(0.003, s.push_at(t)), s.anchor, self.look.weave(t))
+        else:
+            f = push(f, s.push_at(t), s.anchor)
         g = s.gain(t)
         if g < 1.0:
             f = self.black + (f - self.black) * g
+        if self.vintage:
+            self.look.apply(f, fi, t)
         self.grain.apply(f, fi)
         for el in s.overlays:
             el.draw(f, t)
@@ -102,7 +118,11 @@ def main():
     ap.add_argument("--crf", type=int, default=17)
     ap.add_argument("--stills")
     ap.add_argument("--at", type=float, nargs="*")
+    ap.add_argument("--edit", help="film (v1) or film_v2; overrides BNABBAR_EDIT")
     a = ap.parse_args()
+    if a.edit and a.edit != EDIT:
+        os.environ["BNABBAR_EDIT"] = a.edit
+        os.execv(sys.executable, [sys.executable] + sys.argv)
 
     if a.stills:
         os.makedirs(a.stills, exist_ok=True)

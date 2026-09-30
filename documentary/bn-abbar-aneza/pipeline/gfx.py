@@ -196,15 +196,16 @@ def solid(color):
     return f
 
 
-def push(frame, amount, anchor=(0.5, 0.5)):
-    """Scale the frame about `anchor` by (1+amount), cropping to size."""
-    if amount <= 1e-4:
+def push(frame, amount, anchor=(0.5, 0.5), offset=(0.0, 0.0)):
+    """Scale the frame about `anchor` by (1+amount), cropping to size;
+    `offset` adds a sub-pixel translation (gate weave)."""
+    if amount <= 1e-4 and abs(offset[0]) < 0.05 and abs(offset[1]) < 0.05:
         return frame
-    s = 1.0 + amount
+    s = 1.0 + max(0.0, amount)
     ax, ay = anchor[0] * W, anchor[1] * H
     im = Image.fromarray(np.clip(frame * 255 + 0.5, 0, 255).astype(np.uint8))
-    # output pixel (u,v) samples input ((u-ax)/s+ax, (v-ay)/s+ay)
-    coeffs = (1 / s, 0, ax - ax / s, 0, 1 / s, ay - ay / s)
+    # output pixel (u,v) samples input ((u-ax)/s+ax-dx, (v-ay)/s+ay-dy)
+    coeffs = (1 / s, 0, ax - ax / s - offset[0], 0, 1 / s, ay - ay / s - offset[1])
     im = im.transform((W, H), Image.AFFINE, coeffs, resample=Image.BICUBIC)
     return np.asarray(im, dtype=np.float32) / 255.0
 

@@ -6,3 +6,4 @@
   - Cello: Freesound #12408 "real-cello-notes" by flcellogrl, via github.com/nbrosowsky/tonejs-instruments — CC BY 3.0
   - Harp, contrabass: VSO2 (Versilian Studios Orchestra 2), via tonejs-instruments — CC BY 3.0
   - Frame drum, bowed psaltery: VCSL (Versilian Community Sample Library), github.com/sgossner/VCSL — CC0 1.0
+- Archive photographs (`archive/`): the poet's family collection, supplied by the poet's son for this film at the poet's request (30 Sep 2026). `archive/pdf/` holds the images exactly as extracted from the family's PDF; `archive/prepared/` only removes phone-screenshot black bars. Not for reuse outside this film without the family's permission.
